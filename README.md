@@ -5,7 +5,7 @@ Typescript library to aid DApp development on Meter
 ## Installation
 
 ```bash
-npm i --save meter-devkit
+npm i --save @meterio/devkit
 ```
 
 ## Usage
@@ -20,7 +20,7 @@ import {
     Transaction,
     Certificate,
     Bloom
-} from 'meter-devkit'
+} from '@meterio/devkit'
 ```
 
 ### Crypto methods
@@ -197,6 +197,6 @@ let data = fn.encode(1, 'foo')
 
 ## License
 
-meter-devkit is licensed under the
+@meterio/devkit is licensed under the
 [GNU Lesser General Public License v3.0](https://www.gnu.org/licenses/lgpl-3.0.html), also included
 in *LICENSE* file in repository.
