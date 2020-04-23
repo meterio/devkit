@@ -1,7 +1,6 @@
 src/
 tests/
 tsconfig.json
-tslint.json
 .travis.yml
 
 /.vscode/

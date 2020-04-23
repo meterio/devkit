@@ -6,9 +6,9 @@
   "typings": "dist/index.d.ts",
   "scripts": {
     "build": "tsc -p .",
-    "lint": "tslint -p .",
+    "lint": "eslint -c .eslintrc.js --ext .ts src",
     "prepare": "rm -rf dist/; npm run build",
-    "test": "tslint -p . && NODE_ENV=test mocha --require ts-node/register --timeout 20000 --recursive  './**/*.test.ts'",
+    "test": "NODE_ENV=test mocha --require ts-node/register --timeout 20000 --recursive  './**/*.test.ts'",
     "cover": "NODE_ENV=test nyc npm t",
     "coverall": "NODE_ENV=test nyc npm t && nyc report --reporter=text-lcov | coveralls"
   },
@@ -59,19 +59,26 @@
     "@types/elliptic": "^6.4.9",
     "@types/mocha": "^5.2.1",
     "@types/node": "^10.5.2",
+    "@typescript-eslint/eslint-plugin": "^2.29.0",
+    "@typescript-eslint/parser": "^2.29.0",
     "chai": "^4.1.2",
     "coveralls": "^3.0.1",
+    "eslint": "^6.8.0",
+    "eslint-config-prettier": "^6.11.0",
+    "eslint-plugin-prettier": "^3.1.3",
     "mocha": "^5.2.0",
     "nyc": "^14.1.1",
+    "prettier": "^2.0.5",
     "ts-node": "^8.3.0",
-    "tslint": "^5.11.0",
     "typescript": "^3.6.3"
   },
   "dependencies": {
     "@meterio/ethers": "^4.0.27",
     "bignumber.js": "^7.2.1",
     "blakejs": "^1.1.0",
+    "elliptic": "^6.5.2",
     "fast-json-stable-stringify": "^2.0.0",
+    "js-sha3": "^0.8.0",
     "rlp": "^2.0.0"
   }
 }
