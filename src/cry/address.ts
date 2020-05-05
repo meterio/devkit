@@ -3,7 +3,7 @@ import { keccak256 } from './keccak';
  * derive Address from public key
  * @param pubKey the public key
  */
-export function publicKeyToAddress(pubKey: Buffer) {
+export function publicKeyToAddress(pubKey: Buffer): Buffer {
   return keccak256(pubKey.slice(1)).slice(12);
 }
 
@@ -19,7 +19,7 @@ export function isAddress(v: any): v is string {
  * encode the address to checksum address that is compatible with eip-55
  * @param address input address
  */
-export function toChecksumAddress(address: string) {
+export function toChecksumAddress(address: string): string {
   if (!isAddress(address)) {
     throw new Error('invalid address');
   }

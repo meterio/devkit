@@ -8,7 +8,7 @@ export class RLP {
    * encode data according to profile
    * @param data the structured data to be encoded
    */
-  public encode(data: any) {
+  public encode(data: any): Buffer {
     const packed = pack(data, this.profile, '');
     return (rlp.encode(packed) as any) as Buffer;
   }
@@ -17,7 +17,7 @@ export class RLP {
    * decode buffer according to profile
    * @param buf rlp encoded data
    */
-  public decode(buf: Buffer) {
+  public decode(buf: Buffer): any {
     const packed = rlp.decode(buf as any);
     return unpack(packed, this.profile, '');
   }
@@ -44,7 +44,7 @@ export namespace RLP {
 
     public buffer(buf: Buffer, ctx: string) {
       return {
-        decode() {
+        decode(): Buffer {
           return buf;
         },
       };

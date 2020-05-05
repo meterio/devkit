@@ -6,7 +6,7 @@ export namespace mnemonic {
   const VET_DERIVATION_PATH = `m/44'/818'/0'/0`;
 
   /** generate BIP39 mnemonic words */
-  export function generate() {
+  export function generate(): string[] {
     return entropyToMnemonic(randomBytes(128 / 8)).split(' ');
   }
 
@@ -14,7 +14,7 @@ export namespace mnemonic {
    * check if the given mnemonic words have valid checksum
    * @param words mnemonic words
    */
-  export function validate(words: string[]) {
+  export function validate(words: string[]): boolean {
     return isValidMnemonic(words.join(' '));
   }
 

@@ -6,14 +6,14 @@ const curve = new EC('secp256k1');
 const N = Buffer.from('fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141');
 const ZERO = Buffer.alloc(32, 0);
 
-function isValidPrivateKey(key: Buffer) {
+function isValidPrivateKey(key: Buffer): boolean {
   return !key.equals(ZERO) && key.compare(N) < 0;
 }
 
 /** secp256k1 methods set */
 export namespace secp256k1 {
   /** generate private key  */
-  export function generatePrivateKey() {
+  export function generatePrivateKey(): Buffer {
     for (;;) {
       const privKey = randomBytes(32);
       if (isValidPrivateKey(privKey)) {
@@ -26,7 +26,7 @@ export namespace secp256k1 {
    * derive public key(uncompressed) from private key
    * @param privKey the private key
    */
-  export function derivePublicKey(privKey: Buffer) {
+  export function derivePublicKey(privKey: Buffer): Buffer {
     const keyPair = curve.keyFromPrivate(privKey);
     return Buffer.from(keyPair.getPublic().encode('array', false) as any);
   }
@@ -36,7 +36,7 @@ export namespace secp256k1 {
    * @param msgHash hash of message
    * @param privKey serialized private key
    */
-  export function sign(msgHash: Buffer, privKey: Buffer) {
+  export function sign(msgHash: Buffer, privKey: Buffer): Buffer {
     const keyPair = curve.keyFromPrivate(privKey);
     const sig = keyPair.sign(msgHash, { canonical: true });
 
@@ -51,7 +51,7 @@ export namespace secp256k1 {
    * @param msgHash hash of message
    * @param sig signature
    */
-  export function recover(msgHash: Buffer, sig: Buffer) {
+  export function recover(msgHash: Buffer, sig: Buffer): Buffer {
     if (sig.length !== 65) {
       throw new Error('invalid signature');
     }

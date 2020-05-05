@@ -41,7 +41,7 @@ export namespace Certificate {
    * verify the cert
    * @param cert cert object with signature
    */
-  export function verify(cert: Certificate) {
+  export function verify(cert: Certificate): void {
     if (!cert.signature) {
       throw new Error('signature missing');
     }

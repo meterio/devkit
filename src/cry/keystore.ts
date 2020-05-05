@@ -1,4 +1,5 @@
 import * as SecretStorage from '@meterio/ethers/utils/secret-storage';
+import { SigningKey } from '@meterio/ethers/utils/signing-key';
 
 /** to present encrypted private key in Ethereum keystore format. */
 export interface Keystore {
@@ -30,7 +31,7 @@ export namespace Keystore {
    * @param ks the keystore
    * @param password password to decrypt keystore
    */
-  export function decrypt(ks: Keystore, password: string) {
+  export function decrypt(ks: Keystore, password: string): Promise<Buffer | SigningKey> {
     return SecretStorage.decrypt(JSON.stringify(ks), password).then((sk) =>
       Buffer.from(sk.privateKey.slice(2), 'hex')
     );
@@ -64,7 +65,7 @@ export namespace Keystore {
     return lowerKey(obj);
   }
 
-  function validate(ks: Keystore) {
+  function validate(ks: Keystore): Keystore {
     if (ks.version !== 1 && ks.version !== 3) {
       throw new Error('unsupported version');
     }

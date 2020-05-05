@@ -11,7 +11,7 @@ export class Transaction {
    * @param raw encoded buffer
    * @param unsigned to indicator if the encoded buffer contains signature
    */
-  public static decode(raw: Buffer, unsigned?: boolean) {
+  public static decode(raw: Buffer, unsigned?: boolean): Transaction {
     let body: Transaction.Body;
     let signature: Buffer | undefined;
     if (unsigned) {
@@ -64,7 +64,7 @@ export class Transaction {
    * returns transaction ID
    * null returned if something wrong (e.g. invalid signature)
    */
-  get id() {
+  get id(): null | string {
     if (!this._signatureValid) {
       return null;
     }
@@ -83,7 +83,7 @@ export class Transaction {
    * It returns tx hash for origin or delegator depends on param `delegateFor`.
    * @param delegateFor address of intended tx origin. If set, the returned hash is for delegator to sign.
    */
-  public signingHash(delegateFor?: string) {
+  public signingHash(delegateFor?: string): Buffer {
     const reserved = this._encodeReserved();
     const buf = unsignedTxRLP.encode({ ...this.body, reserved });
     const hash = blake2b256(buf);
@@ -98,7 +98,7 @@ export class Transaction {
   }
 
   /** returns tx origin. null returned if no signature or not incorrectly signed */
-  get origin() {
+  get origin(): null | string {
     if (!this._signatureValid) {
       return null;
     }
@@ -113,7 +113,7 @@ export class Transaction {
   }
 
   /** returns tx delegator. null returned if no signature or not incorrectly signed */
-  get delegator() {
+  get delegator(): null | string {
     if (!this.delegated) {
       return null;
     }
@@ -136,7 +136,7 @@ export class Transaction {
   }
 
   /** returns whether delegated. see https://github.com/dfinlab/VIPs/blob/master/vips/VIP-191.md */
-  get delegated() {
+  get delegated(): boolean {
     return (
       (((this.body.reserved || {}).features || 0) & Transaction.DELEGATED_MASK) ===
       Transaction.DELEGATED_MASK
@@ -144,12 +144,12 @@ export class Transaction {
   }
 
   /** returns intrinsic gas it takes */
-  get intrinsicGas() {
+  get intrinsicGas(): number {
     return Transaction.intrinsicGas(this.body.clauses);
   }
 
   /** encode into Buffer */
-  public encode() {
+  public encode(): Buffer {
     const reserved = this._encodeReserved();
     if (this.signature) {
       return txRLP.encode({ ...this.body, reserved, signature: this.signature });
@@ -158,7 +158,7 @@ export class Transaction {
     return unsignedTxRLP.encode({ ...this.body, reserved });
   }
 
-  private _encodeReserved() {
+  private _encodeReserved(): Buffer[] {
     const reserved = this.body.reserved || {};
     const list = [
       featuresKind.data(reserved.features || 0, 'reserved.features').encode(),
@@ -176,7 +176,7 @@ export class Transaction {
     return list;
   }
 
-  private get _signatureValid() {
+  private get _signatureValid(): boolean {
     const expectedSigLen = this.delegated ? 65 * 2 : 65;
     return this.signature ? this.signature.length === expectedSigLen : false;
   }
@@ -230,7 +230,7 @@ export namespace Transaction {
    * calculates intrinsic gas that a tx costs with the given clauses.
    * @param clauses
    */
-  export function intrinsicGas(clauses: Clause[]) {
+  export function intrinsicGas(clauses: Clause[]): number {
     const txGas = 5000;
     const clauseGas = 16000;
     const clauseGasContractCreation = 48000;
@@ -250,7 +250,7 @@ export namespace Transaction {
     }, txGas);
   }
 
-  function dataGas(data: string) {
+  function dataGas(data: string): number {
     const zgas = 4;
     const nzgas = 68;
 

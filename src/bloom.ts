@@ -11,7 +11,7 @@ export class Bloom {
   public static readonly BITS_LENGTH = 2048;
 
   /** estimate k(number of hash functions) according to item count */
-  public static estimateK(itemCount: number) {
+  public static estimateK(itemCount: number): number {
     const k = Math.round((this.BITS_LENGTH / itemCount) * Math.LN2);
     return Math.max(Math.min(k, this.MAX_K), 1);
   }
@@ -38,7 +38,7 @@ export class Bloom {
    * add item
    * @param item
    */
-  public add(item: Buffer) {
+  public add(item: Buffer): void {
     this.distribute(item, (index, bit) => {
       this.bits[index] |= bit;
       return true;
@@ -49,7 +49,7 @@ export class Bloom {
    * test if an item contained. (false positive)
    * @param item
    */
-  public test(item: Buffer) {
+  public test(item: Buffer): boolean {
     return this.distribute(item, (index, bit) => {
       return (this.bits[index] & bit) === bit;
     });

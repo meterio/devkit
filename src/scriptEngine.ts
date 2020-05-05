@@ -1,6 +1,5 @@
 import * as rlp from 'rlp';
 import { RLP } from './rlp';
-import { formatParamType } from '@meterio/ethers/utils/abi-coder';
 
 export namespace ScriptEngine {
   export const SCRIPT_ENGINE_PREFIX = Buffer.from('ffffffffdeadbeef', 'hex');
@@ -73,6 +72,7 @@ export namespace ScriptEngine {
         { name: 'token', kind: new RLP.NumericKind() },
         { name: 'timestamp', kind: new RLP.NumericKind() },
         { name: 'nonce', kind: new RLP.NumericKind() },
+        { name: 'extra', kind: new RLP.BufferKind() },
       ],
     };
     public opCode: OpCode;
@@ -89,6 +89,7 @@ export namespace ScriptEngine {
     public token: Token;
     public timestamp: number;
     public nonce: number;
+    public extra: Buffer;
 
     constructor(
       op: OpCode,
@@ -150,6 +151,7 @@ export namespace ScriptEngine {
       } else {
         this.nonce = getRandomInt64();
       }
+      this.extra = Buffer.from('', 'hex');
     }
 
     public encode(): Buffer {
@@ -175,23 +177,13 @@ export namespace ScriptEngine {
         this.nonce,
       ];
       const payloadBytes = rlp.encode(body);
-      /*
-      console.log('opCode Hex: ', rlp.encode(this.OpCode).toString('hex'));
-      console.log('version Hex: ', rlp.encode(this.Version).toString('hex'));
-      console.log('option Hex: ', rlp.encode(this.Option).toString('hex'));
-      console.log('holderAddr Hex: ', rlp.encode(holderAddr).toString('hex'));
-      console.log('candAddr Hex: ', rlp.encode(candAddr).toString('hex'));
-
-      console.log('Payload Hex: ', payloadBytes.toString('hex'));
-      */
       const header = [SCRIPT_ENGINE_VERSION, ModuleID.Staking];
-
       const script = [header, payloadBytes];
       const data = rlp.encode(script);
       return Buffer.concat([SCRIPT_ENGINE_PREFIX, data]);
     }
 
-    public decode(data: Buffer) {
+    public decode(data: Buffer): void {
       const body = new RLP(StakingBody.profile).decode(data);
       Object.assign(this, body);
     }
@@ -355,7 +347,8 @@ export namespace ScriptEngine {
     console.log('data:', data);
     const out = rlp.decode(Buffer.from(data, 'hex'));
     const iter = out.entries();
-    const headerBuffer = iter.next();
+    // const headerBuffer = iter.next();
+    iter.next();
     const bodyBuffer = iter.next();
     console.log(bodyBuffer.value[1]);
     const items = rlp.decode(bodyBuffer.value[1]);
