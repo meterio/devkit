@@ -175,6 +175,7 @@ export namespace ScriptEngine {
         tokenVal,
         this.timestamp,
         this.nonce,
+        this.extra,
       ];
       const payloadBytes = rlp.encode(body);
       const header = [SCRIPT_ENGINE_VERSION, ModuleID.Staking];

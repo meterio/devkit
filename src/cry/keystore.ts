@@ -31,7 +31,7 @@ export namespace Keystore {
    * @param ks the keystore
    * @param password password to decrypt keystore
    */
-  export function decrypt(ks: Keystore, password: string): Promise<Buffer | SigningKey> {
+  export function decrypt(ks: Keystore, password: string): Promise<Buffer> {
     return SecretStorage.decrypt(JSON.stringify(ks), password).then((sk) =>
       Buffer.from(sk.privateKey.slice(2), 'hex')
     );
