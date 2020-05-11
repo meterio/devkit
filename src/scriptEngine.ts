@@ -29,6 +29,8 @@ export namespace ScriptEngine {
     StakingUndelegate = 6,
     StakingCandidateUpdate = 7,
 
+    SlashingBailOut = 102,
+
     // auction
     AuctionStart = 1,
     AuctionEnd = 2,
@@ -333,6 +335,52 @@ export namespace ScriptEngine {
       0,
       stakingIDStr,
       amount.toString(),
+      Token.MeterGov,
+      timestamp,
+      nonce
+    );
+    return body.encode();
+  }
+
+  export function getCandidateUpdateData(
+    holderAddr: string,
+    candidateName: string,
+    candidatePubKey: string,
+    candidateIP: string,
+    candidatePort: number,
+    timestamp = 0,
+    nonce = 0
+  ) {
+    const body = new StakingBody(
+      OpCode.StakingCandidateUpdate,
+      Option.OneWeekLock,
+      holderAddr,
+      holderAddr,
+      candidateName,
+      candidatePubKey,
+      candidateIP,
+      candidatePort,
+      '',
+      0,
+      Token.MeterGov,
+      timestamp,
+      nonce
+    );
+    return body.encode();
+  }
+
+  export function getBailOutData(holderAddr: string, timestamp = 0, nonce = 0) {
+    const body = new StakingBody(
+      OpCode.SlashingBailOut,
+      Option.Empty,
+      holderAddr,
+      holderAddr,
+      '',
+      '',
+      '',
+      0,
+      '',
+      '0',
       Token.MeterGov,
       timestamp,
       nonce
