@@ -2,8 +2,9 @@ import * as rlp from 'rlp';
 import { RLP } from './rlp';
 
 export namespace ScriptEngine {
-  export const SCRIPT_ENGINE_PREFIX = Buffer.from('ffffffffdeadbeef', 'hex');
+  export const SCRIPT_ENGINE_PREFIX = Buffer.from('ffffffff', 'hex');
   export const SCRIPT_ENGINE_VERSION = 0;
+  export const SCRIPT_DATA_PREFIX = Buffer.from('deadbeef', 'hex');
   export const STAKING_VERSION = 0;
   export const AUCTION_VERSION = 0;
   export const EMPTY_ADDRESS = '0x0000000000000000000000000000000000000000';
@@ -53,30 +54,123 @@ export namespace ScriptEngine {
     return getRandomInt(9007199254740992);
   }
 
+  class DecodeError extends Error {
+    constructor(message?: string) {
+      super(message); // 'Error' breaks prototype chain here
+      Object.setPrototypeOf(this, new.target.prototype); // restore prototype chain
+    }
+  }
+
+  class EncodeError extends Error {
+    constructor(message?: string) {
+      super(message); // 'Error' breaks prototype chain here
+      Object.setPrototypeOf(this, new.target.prototype); // restore prototype chain
+    }
+  }
+
+  export function encodeScriptData(moduleID: ModuleID, body: StakingBody | AuctionBody): Buffer {
+    switch (moduleID) {
+      case ModuleID.Staking:
+        if (!(body instanceof StakingBody)) {
+          throw new EncodeError('module is set to staking, but no staking body is provided');
+        }
+        return new ScriptData(moduleID, body.encode()).encode();
+      case ModuleID.Auction:
+        if (!(body instanceof AuctionBody)) {
+          throw new EncodeError('module is set to auction, but no auction body is provided');
+        }
+        return new ScriptData(moduleID, body.encode()).encode();
+      default:
+        throw new EncodeError(`unrecognized moduleID: ${moduleID}`);
+    }
+  }
+
+  export function decodeScriptData(buffer: Buffer): ScriptData {
+    let hexStr = buffer.toString('hex');
+    const sePrefixStr = SCRIPT_ENGINE_PREFIX.toString('hex');
+    const sdPrefixStr = SCRIPT_DATA_PREFIX.toString('hex');
+    if (hexStr.startsWith(sePrefixStr)) {
+      hexStr = hexStr.substring(sePrefixStr.length);
+    }
+
+    if (!hexStr.startsWith(sdPrefixStr)) {
+      throw new DecodeError('could not decode script data: 0x' + buffer.toString('hex'));
+    }
+    const truncated = Buffer.from(hexStr.substring(sdPrefixStr.length), 'hex');
+    return new RLP(ScriptDataProfile).decode(truncated);
+  }
+
+  export function decodeStakingBody(buffer: Buffer): StakingBody {
+    return new RLP(StakingBodyProfile).decode(buffer);
+  }
+
+  export function decodeAuctionBody(buffer: Buffer): AuctionBody {
+    return new RLP(AuctionBodyProfile).decode(buffer);
+  }
+
+  export const ScriptDataProfile: RLP.Profile = {
+    name: 'scriptDataProfile',
+    kind: [
+      {
+        name: 'header',
+        kind: [
+          { name: 'version', kind: new RLP.NumericKind() },
+          { name: 'modId', kind: new RLP.NumericKind() },
+        ],
+      },
+      { name: 'payload', kind: new RLP.BufferKind() },
+    ],
+  };
+  export class ScriptDataHeader {
+    public version: number;
+    public modId: number;
+    constructor(version: number, modId: number) {
+      this.version = version;
+      this.modId = modId;
+    }
+  }
+  export class ScriptData {
+    public header: ScriptDataHeader;
+    public payload: Buffer;
+
+    constructor(modId: number, payload: Buffer) {
+      this.header = new ScriptDataHeader(SCRIPT_ENGINE_VERSION, modId);
+      this.payload = payload;
+    }
+
+    encode(): Buffer {
+      return Buffer.concat([
+        SCRIPT_ENGINE_PREFIX,
+        SCRIPT_DATA_PREFIX,
+        new RLP(ScriptDataProfile).encode(this),
+      ]);
+    }
+  }
+
   // ------------------------------------------
   //                STAKING
   // ------------------------------------------
+  export const StakingBodyProfile: RLP.Profile = {
+    name: 'stakingBodyProfile',
+    kind: [
+      { name: 'opCode', kind: new RLP.NumericKind() },
+      { name: 'version', kind: new RLP.NumericKind() },
+      { name: 'option', kind: new RLP.NumericKind() },
+      { name: 'holderAddr', kind: new RLP.BufferKind() },
+      { name: 'candidateAddr', kind: new RLP.BufferKind() },
+      { name: 'candidateName', kind: new RLP.BufferKind() },
+      { name: 'candidatePubKey', kind: new RLP.BufferKind() },
+      { name: 'candidateIP', kind: new RLP.BufferKind() },
+      { name: 'candidatePort', kind: new RLP.NumericKind() },
+      { name: 'bucketID', kind: new RLP.BufferKind() },
+      { name: 'amount', kind: new RLP.NumericKind() },
+      { name: 'token', kind: new RLP.NumericKind() },
+      { name: 'timestamp', kind: new RLP.NumericKind() },
+      { name: 'nonce', kind: new RLP.NumericKind() },
+      { name: 'extra', kind: new RLP.BufferKind() },
+    ],
+  };
   export class StakingBody {
-    public static profile: RLP.Profile = {
-      name: '',
-      kind: [
-        { name: 'opCode', kind: new RLP.NumericKind() },
-        { name: 'version', kind: new RLP.NumericKind() },
-        { name: 'option', kind: new RLP.NumericKind() },
-        { name: 'holderAddr', kind: new RLP.BufferKind() },
-        { name: 'candidateAddr', kind: new RLP.BufferKind() },
-        { name: 'candidateName', kind: new RLP.BufferKind() },
-        { name: 'candidatePubKey', kind: new RLP.BufferKind() },
-        { name: 'candidateIP', kind: new RLP.BufferKind() },
-        { name: 'candidatePort', kind: new RLP.NumericKind() },
-        { name: 'bucketID', kind: new RLP.BufferKind() },
-        { name: 'amount', kind: new RLP.NumericKind() },
-        { name: 'token', kind: new RLP.NumericKind() },
-        { name: 'timestamp', kind: new RLP.NumericKind() },
-        { name: 'nonce', kind: new RLP.NumericKind() },
-        { name: 'extra', kind: new RLP.BufferKind() },
-      ],
-    };
     public opCode: OpCode;
     public version: number;
     public option: Option;
@@ -157,38 +251,7 @@ export namespace ScriptEngine {
     }
 
     public encode(): Buffer {
-      let tokenVal = Buffer.from('', 'hex');
-      if (this.token === Token.MeterGov) {
-        tokenVal = Buffer.from('01', 'hex');
-      }
-      const amountNum = parseInt(this.amount, 10);
-      const body = [
-        this.opCode,
-        this.version,
-        this.option,
-        this.holderAddr,
-        this.candidateAddr,
-        this.candidateName,
-        this.candidatePubKey,
-        this.candidateIP,
-        this.candidatePort,
-        this.bucketID,
-        amountNum,
-        tokenVal,
-        this.timestamp,
-        this.nonce,
-        this.extra,
-      ];
-      const payloadBytes = rlp.encode(body);
-      const header = [SCRIPT_ENGINE_VERSION, ModuleID.Staking];
-      const script = [header, payloadBytes];
-      const data = rlp.encode(script);
-      return Buffer.concat([SCRIPT_ENGINE_PREFIX, data]);
-    }
-
-    public decode(data: Buffer): void {
-      const body = new RLP(StakingBody.profile).decode(data);
-      Object.assign(this, body);
+      return new RLP(StakingBodyProfile).encode(this);
     }
   }
 
@@ -215,7 +278,7 @@ export namespace ScriptEngine {
       timestamp,
       nonce
     );
-    return body.encode();
+    return new ScriptData(ModuleID.Staking, body.encode()).encode();
   }
 
   export function getUnboundData(
@@ -240,7 +303,7 @@ export namespace ScriptEngine {
       timestamp,
       nonce
     );
-    return body.encode();
+    return new ScriptData(ModuleID.Staking, body.encode()).encode();
   }
 
   export function getCandidateData(
@@ -269,7 +332,8 @@ export namespace ScriptEngine {
       timestamp,
       nonce
     );
-    return body.encode();
+    return new ScriptData(ModuleID.Staking, body.encode()).encode();
+    // return body.encode();
   }
 
   export function getUncandidateData(candidateAddr: string, timestamp = 0, nonce = 0): Buffer {
@@ -288,7 +352,7 @@ export namespace ScriptEngine {
       timestamp,
       nonce
     );
-    return body.encode();
+    return new ScriptData(ModuleID.Staking, body.encode()).encode();
   }
 
   export function getDelegateData(
@@ -314,7 +378,8 @@ export namespace ScriptEngine {
       timestamp,
       nonce
     );
-    return body.encode();
+    return new ScriptData(ModuleID.Staking, body.encode()).encode();
+    // return body.encode();
   }
 
   export function getUndelegateData(
@@ -339,7 +404,8 @@ export namespace ScriptEngine {
       timestamp,
       nonce
     );
-    return body.encode();
+    return new ScriptData(ModuleID.Staking, body.encode()).encode();
+    // return body.encode();
   }
 
   export function getCandidateUpdateData(
@@ -350,7 +416,7 @@ export namespace ScriptEngine {
     candidatePort: number,
     timestamp = 0,
     nonce = 0
-  ) {
+  ): Buffer {
     const body = new StakingBody(
       OpCode.StakingCandidateUpdate,
       Option.OneWeekLock,
@@ -366,10 +432,11 @@ export namespace ScriptEngine {
       timestamp,
       nonce
     );
-    return body.encode();
+    return new ScriptData(ModuleID.Staking, body.encode()).encode();
+    // return body.encode();
   }
 
-  export function getBailOutData(holderAddr: string, timestamp = 0, nonce = 0) {
+  export function getBailOutData(holderAddr: string, timestamp = 0, nonce = 0): Buffer {
     const body = new StakingBody(
       OpCode.SlashingBailOut,
       Option.Empty,
@@ -385,55 +452,33 @@ export namespace ScriptEngine {
       timestamp,
       nonce
     );
-    return body.encode();
-  }
-
-  export function parseStakingData(data: string) {
-    if (data.startsWith('0x')) {
-      data = data.replace('0x', '');
-    }
-    data = data.replace('ffffffffdeadbeef', '');
-    console.log('data:', data);
-    const out = rlp.decode(Buffer.from(data, 'hex'));
-    const iter = out.entries();
-    // const headerBuffer = iter.next();
-    iter.next();
-    const bodyBuffer = iter.next();
-    console.log(bodyBuffer.value[1]);
-    const items = rlp.decode(bodyBuffer.value[1]);
-    const bodyIter = items.entries();
-    let i = 0;
-    let item: IteratorResult<[number, number], any>;
-    do {
-      item = bodyIter.next();
-      console.log(i + 1, ':', item);
-      i += 1;
-    } while (item.done != true);
+    return new ScriptData(ModuleID.Staking, body.encode()).encode();
+    // return body.encode();
   }
 
   // ------------------------------------------
   //                AUCTION
   // ------------------------------------------
-  export class AuctionBody {
-    public static profile: RLP.Profile = {
-      name: '',
-      kind: [
-        { name: 'opCode', kind: new RLP.NumericKind() },
-        { name: 'version', kind: new RLP.NumericKind() },
-        { name: 'option', kind: new RLP.NumericKind() },
-        { name: 'startHeight', kind: new RLP.NumericKind() },
-        { name: 'startEpoch', kind: new RLP.NumericKind() },
-        { name: 'endHeight', kind: new RLP.NumericKind() },
-        { name: 'endEpoch', kind: new RLP.NumericKind() },
-        { name: 'auctionID', kind: new RLP.BufferKind() },
-        { name: 'bidder', kind: new RLP.BufferKind() },
-        { name: 'amount', kind: new RLP.NumericKind() },
-        { name: 'token', kind: new RLP.NumericKind() },
-        { name: 'timestamp', kind: new RLP.NumericKind() },
-        { name: 'nonce', kind: new RLP.NumericKind() },
-      ],
-    };
+  export const AuctionBodyProfile: RLP.Profile = {
+    name: 'auctionBody',
+    kind: [
+      { name: 'opCode', kind: new RLP.NumericKind() },
+      { name: 'version', kind: new RLP.NumericKind() },
+      { name: 'option', kind: new RLP.NumericKind() },
+      { name: 'startHeight', kind: new RLP.NumericKind() },
+      { name: 'startEpoch', kind: new RLP.NumericKind() },
+      { name: 'endHeight', kind: new RLP.NumericKind() },
+      { name: 'endEpoch', kind: new RLP.NumericKind() },
+      { name: 'auctionID', kind: new RLP.BufferKind() },
+      { name: 'bidder', kind: new RLP.BufferKind() },
+      { name: 'amount', kind: new RLP.NumericKind() },
+      { name: 'token', kind: new RLP.NumericKind() },
+      { name: 'timestamp', kind: new RLP.NumericKind() },
+      { name: 'nonce', kind: new RLP.NumericKind() },
+    ],
+  };
 
+  export class AuctionBody {
     public opCode: OpCode;
     public version: number;
     public option: Option;
@@ -498,33 +543,7 @@ export namespace ScriptEngine {
     }
 
     encode(): Buffer {
-      const body = [
-        this.opCode,
-        this.version, // version
-        this.option, // option
-        this.startHeight, // start height
-        this.startEpoch,
-        this.endHeight,
-        this.endEpoch,
-        this.auctionID,
-        this.bidder,
-        parseInt(this.amount, 10),
-        Token.Meter,
-        this.timestamp,
-        this.nonce,
-      ];
-      const payloadBytes = rlp.encode(body);
-      // console.log('Payload Hex: ', payloadBytes.toString('hex'));
-      const header = [SCRIPT_ENGINE_VERSION, ModuleID.Auction];
-
-      const script = [header, payloadBytes];
-      const data = rlp.encode(script);
-      return Buffer.concat([SCRIPT_ENGINE_PREFIX, data]);
-    }
-
-    public decode(data: Buffer): void {
-      const body = new RLP(AuctionBody.profile).decode(data);
-      Object.assign(this, body);
+      return new RLP(AuctionBodyProfile).encode(this);
     }
   }
 
@@ -543,6 +562,6 @@ export namespace ScriptEngine {
       timestamp,
       nonce
     );
-    return body.encode();
+    return new ScriptData(ModuleID.Auction, body.encode()).encode();
   }
 }
