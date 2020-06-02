@@ -13,14 +13,7 @@ npm i --save @meterio/devkit
 import all components or some of them
 
 ```javascript
-import {
-    cry,
-    abi,
-    RLP,
-    Transaction,
-    Certificate,
-    Bloom
-} from '@meterio/devkit'
+import { cry, abi, RLP, Transaction, Certificate, Bloom } from '@meterio/devkit';
 ```
 
 ### Crypto methods
@@ -30,46 +23,46 @@ they are under `cry` namespace
 #### Hashing
 
 ```javascript
-let hash = cry.blake2b256('hello world')
-console.log(hash.toString('hex'))
+let hash = cry.blake2b256('hello world');
+console.log(hash.toString('hex'));
 // 256c83b297114d201b30179f3f0ef0cace9783622da5974326b436178aeef610
 
-hash = cry.keccak256('hello world')
-console.log(hash.toString('hex'))
+hash = cry.keccak256('hello world');
+console.log(hash.toString('hex'));
 // 47173285a8d7341e5e972fc677286384f802f8ef42a5ec5f03bbfa254cb01fad
 ```
 
 #### Secp256k1
 
 ```javascript
-let privKey = cry.secp256k1.generatePrivateKey()
-let pubKey = cry.secp256k1.derivePublicKey(privKey)
-let addr = cry.publicKeyToAddress(pubKey)
-let signature = cry.secp256k1.sign(cry.keccak256('hello world'), privKey)
-let recoveredPubKey = cry.secp256k1.recover(cry.keccak256('hello world'), signature)
+let privKey = cry.secp256k1.generatePrivateKey();
+let pubKey = cry.secp256k1.derivePublicKey(privKey);
+let addr = cry.publicKeyToAddress(pubKey);
+let signature = cry.secp256k1.sign(cry.keccak256('hello world'), privKey);
+let recoveredPubKey = cry.secp256k1.recover(cry.keccak256('hello world'), signature);
 ```
 
 #### Mnemonic & Keystore
 
 ```javascript
 // generate BIP39 mnemonic words, default to 12 words(128bit strength)
-let words = cry.mnemonic.generate()
+let words = cry.mnemonic.generate();
 
 // derive private key from mnemonic words according to BIP32, using the path `m/44'/818'/0'/0`.
 // defined for VET at https://github.com/satoshilabs/slips/blob/master/slip-0044.md
-let privateKey = cry.mnemonic.derivePrivateKey(words)
+let privateKey = cry.mnemonic.derivePrivateKey(words);
 
 // in recovery process, validation is recommended
-let ok = cry.mnemonic.validate(words)
+let ok = cry.mnemonic.validate(words);
 
 // encrypt/decrypt private key using Ethereum's keystore scheme
-let keystore = await cry.Keystore.encrypt(privateKey, 'your password')
+let keystore = await cry.Keystore.encrypt(privateKey, 'your password');
 
 // throw for wrong password
-let recoveredPrivateKey = await cry.Keystore.decrypt(keystore, 'your password')
+let recoveredPrivateKey = await cry.Keystore.decrypt(keystore, 'your password');
 
 // roughly check keystore format
-ok = cry.Keystore.wellFormed(keystore)
+ok = cry.Keystore.wellFormed(keystore);
 ```
 
 ### RLP
@@ -77,61 +70,105 @@ ok = cry.Keystore.wellFormed(keystore)
 ```javascript
 // define the profile for tx clause structure
 let profile: RLP.Profile = {
-    name: 'clause',
-    kind: [
-        { name: 'to', kind: new RLP.NullableFixedBlobKind(20) },
-        { name: 'value', kind: new RLP.NumericKind(32) },
-        { name: 'data', kind: new RLP.BlobKind() }
-    ]
-}
+  name: 'clause',
+  kind: [
+    { name: 'to', kind: new RLP.NullableFixedBlobKind(20) },
+    { name: 'value', kind: new RLP.NumericKind(32) },
+    { name: 'data', kind: new RLP.BlobKind() },
+  ],
+};
 
 let clause = {
-    to: '0x7567d83b7b8d80addcb281a71d54fc7b3364ffed',
-    value: 10,
-    data: '0x'
-}
+  to: '0x7567d83b7b8d80addcb281a71d54fc7b3364ffed',
+  value: 10,
+  data: '0x',
+};
 
-let rlp = new RLP(profile)
+let rlp = new RLP(profile);
 
-let data = rlp.encode(clause)
-console.log(data.toString('hex'))
+let data = rlp.encode(clause);
+console.log(data.toString('hex'));
 // d7947567d83b7b8d80addcb281a71d54fc7b3364ffed0a80
 
-let obj = rlp.decode(data)
+let obj = rlp.decode(data);
 // `obj` should be identical to `clause`
+```
+
+### ScriptEngine
+
+#### Encode
+
+```
+# get script data for staking candidate
+const scriptDataBuffer = ScriptEngine.getCandidateData(
+      ScriptEngine.Option.OneWeekLock,
+      '0x7567d83b7b8d80addcb281a71d54fc7b3364ffed',
+      'tester', // candidateName
+      'BKjr6wO34Vif9oJHK1/AbMCLHVpvJui3Nx3hLwuOfzwx1Th4H4G0I4liGEC3qKsf8KOd078gYFTK+41n+KhDTzk=:::uH2sc+WgsrxPs91LBy8pIBEjM5I7wNPtSwRSNa83wo4V9iX3RmUmkEPq1QRv4wwRbosNO1RFJ/r64bwdSKK1VwA=', // candidatePubkey
+      '1.2.3.4', // candidateIP,
+      8670, // candidatePort,
+      300000000000000000000 // 300 MTRG
+    );
+
+# get script data for staking bound
+const scriptDataBuffer = ScriptEngine.getBoundData(
+      ScriptEngine.Option.OneWeekLock,
+      '0x7567d83b7b8d80addcb281a71d54fc7b3364ffed', // holderAddr
+      '0x7567d83b7b8d80addcb281a71d54fc7b3364ffed', // candidateAddr
+      10000000000000000000 // 10 MTRG
+    );
+
+const scriptData = '0x' + scriptDataBuffer.toString('hex');
+```
+
+#### Decode
+
+```
+ const scriptData = ScriptEngine.decodeScriptData(
+      Buffer.from(
+        'deadbeeff90141c4808203e8b90139f901360380019440df6f787bf8bd3fba3b2ef5a742ae0c993f14189440df6f787bf8bd3fba3b2ef5a742ae0c993f1418887869616f68616e32b8b4424d7845445839506d6e61505a61523935517463516f654c7959586444562b54753375334a7a3973374c52316370466c484f566830414a473874784d36374a5678634a67453848782f41422b444546364c426d7a424a4d3d3a3a3a0a48516b63646d4c30756f754f6d2f4c4f6e7a4c396e68362b4e6a6c486434334e38733168534c5a6e5346494854324e7472797979323138694b454e374f48785339494d4844395846586d794c384643414d542b697851453d8c2035322e37342e3131332e348221dea00000000000000000000000000000000000000000000000000000000000000000891043561a882930000001845ed5899d870926ebe848f0f680',
+        'hex'
+      )
+    );
+    if (scriptData.header.modId === ScriptEngine.ModuleID.Staking) {
+      const body = ScriptEngine.decodeStakingBody(scriptData.payload);
+      console.log('STAKING BODY: ', body);
+    }
 ```
 
 ### Transaction
 
 ```javascript
-let clauses =  [{
+let clauses = [
+  {
     to: '0x7567d83b7b8d80addcb281a71d54fc7b3364ffed',
     value: 10000,
-    data: '0x'
-}]
+    data: '0x',
+  },
+];
 
 // calc intrinsic gas
-let gas = Transaction.intrinsicGas(clauses)
-console.log(gas)
+let gas = Transaction.intrinsicGas(clauses);
+console.log(gas);
 // 21000
 
 let body: Transaction.Body = {
-    chainTag: 0x9a,
-    blockRef: '0x0000000000000000',
-    expiration: 32,
-    clauses: clauses,
-    gasPriceCoef: 128,
-    gas: 21000,
-    dependsOn: null,
-    nonce: 12345678
-}
+  chainTag: 0x9a,
+  blockRef: '0x0000000000000000',
+  expiration: 32,
+  clauses: clauses,
+  gasPriceCoef: 128,
+  gas: 21000,
+  dependsOn: null,
+  nonce: 12345678,
+};
 
-let tx = new Transaction(body)
-let signingHash = cry.blake2b256(tx.encode())
-tx.signature = cry.secp256k1.sign(signingHash, /* your private key */)
+let tx = new Transaction(body);
+let signingHash = cry.blake2b256(tx.encode());
+tx.signature = cry.secp256k1.sign(signingHash /* your private key */);
 
-let raw = tx.encode()
-let decoded = Transaction.decode(raw)
+let raw = tx.encode();
+let decoded = Transaction.decode(raw);
 ```
 
 ### Certificate
@@ -165,38 +202,38 @@ let id = '0x' + cry.blake2b256(Certificate.encode(cert)).toString('hex')
 
 ```javascript
 let fn = new abi.Function({
-    "constant": false,
-    "inputs": [
-        {
-            "name": "a1",
-            "type": "uint256"
-        },
-        {
-            "name": "a2",
-            "type": "string"
-        }
-    ],
-    "name": "f1",
-    "outputs": [
-        {
-            "name": "r1",
-            "type": "address"
-        },
-        {
-            "name": "r2",
-            "type": "bytes"
-        }
-    ],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-})
+  constant: false,
+  inputs: [
+    {
+      name: 'a1',
+      type: 'uint256',
+    },
+    {
+      name: 'a2',
+      type: 'string',
+    },
+  ],
+  name: 'f1',
+  outputs: [
+    {
+      name: 'r1',
+      type: 'address',
+    },
+    {
+      name: 'r2',
+      type: 'bytes',
+    },
+  ],
+  payable: false,
+  stateMutability: 'nonpayable',
+  type: 'function',
+});
 
-let data = fn.encode(1, 'foo')
+let data = fn.encode(1, 'foo');
 ```
 
 ## License
 
 @meterio/devkit is licensed under the
 [GNU Lesser General Public License v3.0](https://www.gnu.org/licenses/lgpl-3.0.html), also included
-in *LICENSE* file in repository.
+in _LICENSE_ file in repository.

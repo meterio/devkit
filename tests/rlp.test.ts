@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { RLP } from '../src';
+import { RLP, ScriptEngine } from '../src';
 
 describe('rlp', () => {
   it('bufferKind', () => {
