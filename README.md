@@ -13,7 +13,7 @@ npm i --save @meterio/devkit
 import all components or some of them
 
 ```javascript
-import { cry, abi, RLP, Transaction, Certificate, Bloom } from '@meterio/devkit';
+import { cry, abi, RLP, Transaction, Certificate, Bloom, ScriptEngine } from '@meterio/devkit';
 ```
 
 ### Crypto methods
