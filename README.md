@@ -98,42 +98,42 @@ let obj = rlp.decode(data);
 
 #### Encode
 
-```
-# get script data for staking candidate
+```javascript
+// get script data for staking candidate
 const scriptDataBuffer = ScriptEngine.getCandidateData(
-      ScriptEngine.Option.OneWeekLock,
-      '0x7567d83b7b8d80addcb281a71d54fc7b3364ffed',
-      'tester', // candidateName
-      'BKjr6wO34Vif9oJHK1/AbMCLHVpvJui3Nx3hLwuOfzwx1Th4H4G0I4liGEC3qKsf8KOd078gYFTK+41n+KhDTzk=:::uH2sc+WgsrxPs91LBy8pIBEjM5I7wNPtSwRSNa83wo4V9iX3RmUmkEPq1QRv4wwRbosNO1RFJ/r64bwdSKK1VwA=', // candidatePubkey
-      '1.2.3.4', // candidateIP,
-      8670, // candidatePort,
-      300000000000000000000 // 300 MTRG
-    );
+  ScriptEngine.Option.OneWeekLock,
+  '0x7567d83b7b8d80addcb281a71d54fc7b3364ffed',
+  'tester', // candidateName
+  'BKjr6wO34Vif9oJHK1/AbMCLHVpvJui3Nx3hLwuOfzwx1Th4H4G0I4liGEC3qKsf8KOd078gYFTK+41n+KhDTzk=:::uH2sc+WgsrxPs91LBy8pIBEjM5I7wNPtSwRSNa83wo4V9iX3RmUmkEPq1QRv4wwRbosNO1RFJ/r64bwdSKK1VwA=', // candidatePubkey
+  '1.2.3.4', // candidateIP,
+  8670, // candidatePort,
+  300000000000000000000 // 300 MTRG
+);
 
-# get script data for staking bound
+// get script data for staking bound
 const scriptDataBuffer = ScriptEngine.getBoundData(
-      ScriptEngine.Option.OneWeekLock,
-      '0x7567d83b7b8d80addcb281a71d54fc7b3364ffed', // holderAddr
-      '0x7567d83b7b8d80addcb281a71d54fc7b3364ffed', // candidateAddr
-      10000000000000000000 // 10 MTRG
-    );
+  ScriptEngine.Option.OneWeekLock,
+  '0x7567d83b7b8d80addcb281a71d54fc7b3364ffed', // holderAddr
+  '0x7567d83b7b8d80addcb281a71d54fc7b3364ffed', // candidateAddr
+  10000000000000000000 // 10 MTRG
+);
 
 const scriptData = '0x' + scriptDataBuffer.toString('hex');
 ```
 
 #### Decode
 
-```
- const scriptData = ScriptEngine.decodeScriptData(
-      Buffer.from(
-        'deadbeeff90141c4808203e8b90139f901360380019440df6f787bf8bd3fba3b2ef5a742ae0c993f14189440df6f787bf8bd3fba3b2ef5a742ae0c993f1418887869616f68616e32b8b4424d7845445839506d6e61505a61523935517463516f654c7959586444562b54753375334a7a3973374c52316370466c484f566830414a473874784d36374a5678634a67453848782f41422b444546364c426d7a424a4d3d3a3a3a0a48516b63646d4c30756f754f6d2f4c4f6e7a4c396e68362b4e6a6c486434334e38733168534c5a6e5346494854324e7472797979323138694b454e374f48785339494d4844395846586d794c384643414d542b697851453d8c2035322e37342e3131332e348221dea00000000000000000000000000000000000000000000000000000000000000000891043561a882930000001845ed5899d870926ebe848f0f680',
-        'hex'
-      )
-    );
-    if (scriptData.header.modId === ScriptEngine.ModuleID.Staking) {
-      const body = ScriptEngine.decodeStakingBody(scriptData.payload);
-      console.log('STAKING BODY: ', body);
-    }
+```javascript
+const scriptData = ScriptEngine.decodeScriptData(
+  Buffer.from(
+    'deadbeeff90141c4808203e8b90139f901360380019440df6f787bf8bd3fba3b2ef5a742ae0c993f14189440df6f787bf8bd3fba3b2ef5a742ae0c993f1418887869616f68616e32b8b4424d7845445839506d6e61505a61523935517463516f654c7959586444562b54753375334a7a3973374c52316370466c484f566830414a473874784d36374a5678634a67453848782f41422b444546364c426d7a424a4d3d3a3a3a0a48516b63646d4c30756f754f6d2f4c4f6e7a4c396e68362b4e6a6c486434334e38733168534c5a6e5346494854324e7472797979323138694b454e374f48785339494d4844395846586d794c384643414d542b697851453d8c2035322e37342e3131332e348221dea00000000000000000000000000000000000000000000000000000000000000000891043561a882930000001845ed5899d870926ebe848f0f680',
+    'hex'
+  )
+);
+if (scriptData.header.modId === ScriptEngine.ModuleID.Staking) {
+  const body = ScriptEngine.decodeStakingBody(scriptData.payload);
+  console.log('STAKING BODY: ', body);
+}
 ```
 
 ### Transaction
