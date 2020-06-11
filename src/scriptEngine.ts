@@ -173,7 +173,7 @@ export namespace ScriptEngine {
   export class StakingBody {
     public opCode: OpCode;
     public version: number;
-    public option: Option;
+    public option: number;
     public holderAddr: Buffer;
     public candidateAddr: Buffer;
     public candidateName: Buffer;
@@ -189,7 +189,7 @@ export namespace ScriptEngine {
 
     constructor(
       op: OpCode,
-      option: Option,
+      option: number,
       holderAddr: string,
       candidateAddr: string,
       candidateName: string,
@@ -307,16 +307,21 @@ export namespace ScriptEngine {
   }
 
   export function getCandidateData(
-    option: number,
+    // omitted option, every bucket is forever
     holderAddr: string,
     candidateName: string,
     candidatePubKey: string,
     candidateIP: string,
     candidatePort: number,
     amount: number | string,
+    commission: number,
     timestamp = 0,
     nonce = 0
   ): Buffer {
+    let option = 0;
+    if (commission >= 100 && commission <= 1000) {
+      option = commission * 1e5;
+    }
     const body = new StakingBody(
       OpCode.StakingCandidate,
       option,
@@ -414,12 +419,17 @@ export namespace ScriptEngine {
     candidatePubKey: string,
     candidateIP: string,
     candidatePort: number,
+    commission: number,
     timestamp = 0,
     nonce = 0
   ): Buffer {
+    let option = 0;
+    if (commission >= 100 && commission <= 1000) {
+      option = commission * 1e5;
+    }
     const body = new StakingBody(
       OpCode.StakingCandidateUpdate,
-      Option.OneWeekLock,
+      option,
       holderAddr,
       holderAddr,
       candidateName,
