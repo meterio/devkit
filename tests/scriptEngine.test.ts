@@ -12,6 +12,10 @@ const amount = 5e18;
 const timestamp = 1567898765;
 const commission = 200; // 2%
 const nonce = 123456;
+const lockEpoch = 100;
+const releaseEpoch = 200;
+const mtrAmount = 20 * 1e18;
+const mtrgAmount = '100000';
 
 describe('script engine', () => {
   it('candidate', () => {
@@ -131,6 +135,22 @@ describe('script engine', () => {
     const scriptData = '0x' + scriptDataBuffer.toString('hex');
     expect(scriptData).equal(
       '0xffffffffdeadbeeff867c4808203e8b860f85e668080940205c2d862ca051010698b69b54278cbaf945c0b940205c2d862ca051010698b69b54278cbaf945c0b80808080a000000000000000000000000000000000000000000000000000000000000000008001845d743c8d8301e24080'
+    );
+  });
+
+  it('lockedTransfer', () => {
+    const scriptDataBuffer = ScriptEngine.getLockedTransferData(
+      lockEpoch,
+      releaseEpoch,
+      holderAddr,
+      candidateAddr,
+      mtrAmount,
+      mtrgAmount,
+      'memo'
+    );
+    const scriptData = '0x' + scriptDataBuffer.toString('hex');
+    expect(scriptData).equal(
+      '0xffffffffdeadbeeff84cc4808203eab845f8430380806481c8940205c2d862ca051010698b69b54278cbaf945c0b948a88c59bf15451f9deb1d62f7734fece2002668e8901158e460913d00000830186a0846d656d6f'
     );
   });
 

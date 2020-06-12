@@ -13,6 +13,7 @@ export namespace ScriptEngine {
   export enum ModuleID {
     Staking = 1000,
     Auction = 1001,
+    AccountLock = 1002,
   }
 
   export enum Token {
@@ -36,6 +37,12 @@ export namespace ScriptEngine {
     AuctionStart = 1,
     AuctionEnd = 2,
     AuctionBid = 3, //
+
+    // account lock
+    AccountLockAdd = 1, // only allowed in kblock
+    AccountLockRemove = 2, // only allowed in kblock
+    AccountLockTransfer = 3,
+    AccountLockGoverning = 4, // only allowed in kblock
   }
 
   export enum Option {
@@ -573,5 +580,98 @@ export namespace ScriptEngine {
       nonce
     );
     return new ScriptData(ModuleID.Auction, body.encode()).encode();
+  }
+
+  // ------------------------------------------
+  //                ACCOUNT LOCK
+  // ------------------------------------------
+  export const AccountLockBodyProfile: RLP.Profile = {
+    name: 'accountLockBodyProfile',
+    kind: [
+      { name: 'opCode', kind: new RLP.NumericKind() },
+      { name: 'version', kind: new RLP.NumericKind() },
+      { name: 'option', kind: new RLP.NumericKind() },
+      { name: 'lockEpoch', kind: new RLP.NumericKind() },
+      { name: 'releaseEpoch', kind: new RLP.NumericKind() },
+      { name: 'fromAddr', kind: new RLP.BufferKind() },
+      { name: 'toAddr', kind: new RLP.BufferKind() },
+      { name: 'meterAmount', kind: new RLP.NumericKind() },
+      { name: 'meterGovAmount', kind: new RLP.NumericKind() },
+      { name: 'memo', kind: new RLP.BufferKind() },
+    ],
+  };
+  export class AccountLockBody {
+    public opCode: OpCode;
+    public version: number;
+    public option: number;
+    public lockEpoch: number;
+    public releaseEpoch: number;
+    public fromAddr: Buffer;
+    public toAddr: Buffer;
+    public meterAmount: string;
+    public meterGovAmount: string;
+    public memo: Buffer;
+
+    constructor(
+      op: OpCode,
+      lockEpoch: number,
+      releaseEpoch: number,
+      fromAddr: string,
+      toAddr: string,
+      meterAmount: number | string,
+      meterGovAmount: number | string,
+      memo: string
+    ) {
+      this.opCode = op;
+      this.version = STAKING_VERSION;
+      this.option = 0;
+      let fromAddrStr = fromAddr;
+      let toAddrStr = toAddr;
+      if (fromAddrStr === '' || fromAddrStr === '0x') {
+        fromAddrStr = EMPTY_ADDRESS;
+      }
+      if (toAddrStr === '' || toAddrStr === '0x') {
+        toAddrStr = EMPTY_ADDRESS;
+      }
+      if (fromAddrStr.startsWith('0x')) {
+        fromAddrStr = fromAddrStr.replace('0x', '');
+      }
+      if (toAddrStr.startsWith('0x')) {
+        toAddrStr = toAddrStr.replace('0x', '');
+      }
+      this.fromAddr = Buffer.from(fromAddrStr, 'hex');
+      this.toAddr = Buffer.from(toAddrStr, 'hex');
+      this.lockEpoch = lockEpoch;
+      this.releaseEpoch = releaseEpoch;
+      this.meterAmount = meterAmount.toString();
+      this.meterGovAmount = meterGovAmount.toString();
+      this.memo = Buffer.from(memo, 'utf-8');
+    }
+
+    public encode(): Buffer {
+      return new RLP(AccountLockBodyProfile).encode(this);
+    }
+  }
+
+  export function getLockedTransferData(
+    lockEpoch: number,
+    releaseEpoch: number,
+    fromAddr: string,
+    toAddr: string,
+    meterAmount: number | string,
+    meterGovAmount: number | string,
+    memo: string
+  ) {
+    const body = new AccountLockBody(
+      OpCode.AccountLockTransfer,
+      lockEpoch,
+      releaseEpoch,
+      fromAddr,
+      toAddr,
+      meterAmount,
+      meterGovAmount,
+      memo
+    );
+    return new ScriptData(ModuleID.AccountLock, body.encode()).encode();
   }
 }
