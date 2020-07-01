@@ -6,4 +6,6 @@ export * from './rlp';
 export * from './bloom';
 export * from './certificate';
 export * from './scriptEngine';
+export * from './chain';
+
 export { cry };
