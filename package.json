@@ -1,6 +1,6 @@
 {
   "name": "@meterio/devkit",
-  "version": "1.2.15",
+  "version": "1.2.16",
   "description": "Typescript library to aid DApp development on Meter network",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
@@ -73,10 +73,10 @@
     "typescript": "^3.6.3"
   },
   "dependencies": {
-    "@meterio/ethers": "^4.0.28",
+    "@meterio/ethers": "^4.0.29",
     "bignumber.js": "^7.2.1",
     "blakejs": "^1.1.0",
-    "elliptic": "^6.5.2",
+    "elliptic": "^6.5.3",
     "fast-json-stable-stringify": "^2.0.0",
     "js-sha3": "^0.8.0",
     "rlp": "^2.0.0"
