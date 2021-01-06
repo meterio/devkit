@@ -166,12 +166,14 @@ export namespace ScriptEngine {
       { name: 'holderAddr', kind: new RLP.BufferKind() },
       { name: 'candidateAddr', kind: new RLP.BufferKind() },
       { name: 'candidateName', kind: new RLP.BufferKind() },
+      { name: 'candidateDescription', kind: new RLP.BufferKind() },
       { name: 'candidatePubKey', kind: new RLP.BufferKind() },
       { name: 'candidateIP', kind: new RLP.BufferKind() },
       { name: 'candidatePort', kind: new RLP.NumericKind() },
       { name: 'bucketID', kind: new RLP.BufferKind() },
       { name: 'amount', kind: new RLP.NumericKind() },
       { name: 'token', kind: new RLP.NumericKind() },
+      { name: 'autobid', kind: new RLP.NumericKind() },
       { name: 'timestamp', kind: new RLP.NumericKind() },
       { name: 'nonce', kind: new RLP.NumericKind() },
       { name: 'extra', kind: new RLP.BufferKind() },
@@ -184,12 +186,14 @@ export namespace ScriptEngine {
     public holderAddr: Buffer;
     public candidateAddr: Buffer;
     public candidateName: Buffer;
+    public candidateDescription: Buffer;
     public candidatePubKey: Buffer;
     public candidateIP: Buffer;
     public candidatePort: number;
     public bucketID: Buffer;
     public amount: string;
     public token: Token;
+    public autobid: number;
     public timestamp: number;
     public nonce: number;
     public extra: Buffer;
@@ -200,18 +204,29 @@ export namespace ScriptEngine {
       holderAddr: string,
       candidateAddr: string,
       candidateName: string,
+      candidateDescription: string,
       candidatePubKey: string,
       candidateIP: string,
       candidatePort: number,
       bucketID: string,
       amount: string | number,
       token: Token,
+      autobid: number,
       timestamp = 0,
       nonce = 0
     ) {
       this.opCode = op;
       this.version = STAKING_VERSION;
       this.option = option;
+      // set autobid to be in range [0,100]
+      let autobidVal = autobid;
+      if (autobid > 100) {
+        autobidVal = 100;
+      }
+      if (autobid < 0) {
+        autobidVal = 0;
+      }
+      this.autobid = autobidVal;
       let holderAddrStr = holderAddr;
       let candidateAddrStr = candidateAddr;
       let bucketIDStr = bucketID;
@@ -238,6 +253,7 @@ export namespace ScriptEngine {
       this.holderAddr = Buffer.from(holderAddrStr, 'hex');
       this.candidateAddr = Buffer.from(candidateAddrStr, 'hex');
       this.candidateName = Buffer.from(candidateName);
+      this.candidateDescription = Buffer.from(candidateDescription);
       this.candidatePubKey = Buffer.from(candidatePubKey);
       this.candidateIP = Buffer.from(candidateIP);
       this.candidatePort = candidatePort;
@@ -268,20 +284,23 @@ export namespace ScriptEngine {
     candidateAddr: string,
     amount: number | string,
     timestamp = 0,
-    nonce = 0
+    nonce = 0,
+    autobid = 0
   ): Buffer {
     const body = new StakingBody(
       OpCode.StakingBound,
       option,
       holderAddr,
       candidateAddr,
-      '',
-      '',
-      '',
-      0,
-      '',
+      '', // name
+      '', // desc
+      '', // pubkey
+      '', // ip
+      0, // port
+      '', // bucket id
       amount,
       Token.MeterGov,
+      autobid, // autobid
       timestamp,
       nonce
     );
@@ -299,14 +318,16 @@ export namespace ScriptEngine {
       OpCode.StakingUnbound,
       Option.Empty,
       holderAddr,
-      '',
-      '',
-      '',
-      '',
-      0,
-      stakingIDStr,
+      '', // candidate addr
+      '', // name
+      '', // desc
+      '', // pubkey
+      '', // ip
+      0, // port
+      stakingIDStr, // bucket id
       amount,
       Token.MeterGov,
+      0, // autobid
       timestamp,
       nonce
     );
@@ -317,13 +338,15 @@ export namespace ScriptEngine {
     // omitted option, every bucket is forever
     holderAddr: string,
     candidateName: string,
+    candidateDescription: string,
     candidatePubKey: string,
     candidateIP: string,
     candidatePort: number,
     amount: number | string,
     commission: number,
     timestamp = 0,
-    nonce = 0
+    nonce = 0,
+    autobid = 0
   ): Buffer {
     let option = 0;
     if (commission >= 100 && commission <= 1000) {
@@ -335,12 +358,14 @@ export namespace ScriptEngine {
       holderAddr,
       holderAddr,
       candidateName,
+      candidateDescription,
       candidatePubKey,
       candidateIP,
       candidatePort,
       '',
       amount.toString(),
       Token.MeterGov,
+      autobid, // autobid
       timestamp,
       nonce
     );
@@ -353,14 +378,16 @@ export namespace ScriptEngine {
       OpCode.StakingUncandidate,
       Option.Empty,
       EMPTY_ADDRESS,
-      candidateAddr,
-      '',
-      '',
-      '',
-      0,
-      '',
-      0,
-      Token.MeterGov,
+      candidateAddr, // candidate addr
+      '', // name
+      '', // desc
+      '', // pubkey
+      '', // ip
+      0, // port
+      '', // bucket id
+      0, // amount
+      Token.MeterGov, // token
+      0, // autobid
       timestamp,
       nonce
     );
@@ -373,20 +400,23 @@ export namespace ScriptEngine {
     bucketID: string,
     amount: string | number,
     timestamp = 0,
-    nonce = 0
+    nonce = 0,
+    autobid = 0
   ): Buffer {
     const body = new StakingBody(
       OpCode.StakingDelegate,
       Option.Empty,
       holderAddr,
       candidateAddr,
-      '',
-      '',
-      '',
-      0,
-      bucketID,
+      '', // name
+      '', // desc
+      '', // pubkey
+      '', // ip
+      0, // port
+      bucketID, // bucket id
       amount.toString(),
       Token.MeterGov,
+      autobid,
       timestamp,
       nonce
     );
@@ -405,14 +435,16 @@ export namespace ScriptEngine {
       OpCode.StakingUndelegate,
       Option.Empty,
       holderAddr,
-      '',
-      '',
-      '',
-      '',
-      0,
+      '', // candidate addr
+      '', // name
+      '', // desc
+      '', // pubkey
+      '', // ip
+      0, // port
       stakingIDStr,
       amount.toString(),
       Token.MeterGov,
+      0, // autobid
       timestamp,
       nonce
     );
@@ -423,12 +455,14 @@ export namespace ScriptEngine {
   export function getCandidateUpdateData(
     holderAddr: string,
     candidateName: string,
+    candidateDescription: string,
     candidatePubKey: string,
     candidateIP: string,
     candidatePort: number,
     commission: number,
     timestamp = 0,
-    nonce = 0
+    nonce = 0,
+    autobid = 0
   ): Buffer {
     let option = 0;
     if (commission >= 100 && commission <= 1000) {
@@ -440,12 +474,14 @@ export namespace ScriptEngine {
       holderAddr,
       holderAddr,
       candidateName,
+      candidateDescription,
       candidatePubKey,
       candidateIP,
       candidatePort,
       '',
       0,
       Token.MeterGov,
+      autobid, // autobid
       timestamp,
       nonce
     );
@@ -459,13 +495,15 @@ export namespace ScriptEngine {
       Option.Empty,
       holderAddr,
       holderAddr,
-      '',
-      '',
-      '',
-      0,
-      '',
-      '0',
+      '', // name
+      '', // desc
+      '', // pubkey
+      '', // ip
+      0, // port
+      '', // bucket id
+      '0', // amount
       Token.MeterGov,
+      0, // autobid
       timestamp,
       nonce
     );
