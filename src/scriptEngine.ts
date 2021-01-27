@@ -1,5 +1,6 @@
 import * as rlp from 'rlp';
 import { RLP } from './rlp';
+import BigNumber from 'bignumber.js';
 
 export namespace ScriptEngine {
   export const SCRIPT_ENGINE_PREFIX = Buffer.from('ffffffff', 'hex');
@@ -276,6 +277,20 @@ export namespace ScriptEngine {
     public encode(): Buffer {
       return new RLP(StakingBodyProfile).encode(this);
     }
+
+    public toJSON(): object {
+      return {
+        ...this,
+        bucketID: '0x' + this.bucketID.toString('hex'),
+        candidateAddr: '0x' + this.candidateAddr.toString('hex'),
+        candidateDescription: this.candidateDescription.toString(),
+        candidateIP: this.candidateIP.toString(),
+        candidateName: this.candidateName.toString(),
+        candidatePubKey: this.candidatePubKey.toString(),
+        extra: this.extra.toString('hex'),
+        amount: new BigNumber(this.amount).toFixed(),
+      };
+    }
   }
 
   export function getBoundData(
@@ -527,6 +542,7 @@ export namespace ScriptEngine {
       { name: 'auctionID', kind: new RLP.BufferKind() },
       { name: 'bidder', kind: new RLP.BufferKind() },
       { name: 'amount', kind: new RLP.NumericKind() },
+      { name: 'reserveAmount', kind: new RLP.NumericKind() },
       { name: 'token', kind: new RLP.NumericKind() },
       { name: 'timestamp', kind: new RLP.NumericKind() },
       { name: 'nonce', kind: new RLP.NumericKind() },
@@ -544,6 +560,7 @@ export namespace ScriptEngine {
     public auctionID: Buffer;
     public bidder: Buffer;
     public amount: string;
+    public reserveAmount: string;
     public token: Token;
     public timestamp: number;
     public nonce: number;
@@ -584,6 +601,7 @@ export namespace ScriptEngine {
       this.auctionID = Buffer.from(auctionIDStr, 'hex');
       this.bidder = Buffer.from(bidderStr, 'hex');
       this.amount = amount.toString();
+      this.reserveAmount = '0';
       this.token = Token.Meter;
       if (timestamp != 0) {
         this.timestamp = timestamp;
@@ -597,8 +615,18 @@ export namespace ScriptEngine {
       }
     }
 
-    encode(): Buffer {
+    public encode(): Buffer {
       return new RLP(AuctionBodyProfile).encode(this);
+    }
+
+    public toJSON(): object {
+      return {
+        ...this,
+        auctionID: '0x' + this.auctionID.toString('hex'),
+        bidder: '0x' + this.bidder.toString('hex'),
+        amount: new BigNumber(this.amount).toFixed(),
+        reserveAmount: new BigNumber(this.reserveAmount).toFixed(),
+      };
     }
   }
 
@@ -688,6 +716,17 @@ export namespace ScriptEngine {
 
     public encode(): Buffer {
       return new RLP(AccountLockBodyProfile).encode(this);
+    }
+
+    public toJSON(): object {
+      return {
+        ...this,
+        fromAddr: '0x' + this.fromAddr.toString('hex'),
+        toAddr: '0x' + this.fromAddr.toString('hex'),
+        meterAmount: new BigNumber(this.meterAmount).toFixed(),
+        meterGovAmount: new BigNumber(this.meterGovAmount).toFixed(),
+        memo: this.memo.toString(),
+      };
     }
   }
 

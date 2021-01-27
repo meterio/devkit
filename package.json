@@ -1,6 +1,6 @@
 {
   "name": "@meterio/devkit",
-  "version": "1.2.16",
+  "version": "1.3.2",
   "description": "Typescript library to aid DApp development on Meter network",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",

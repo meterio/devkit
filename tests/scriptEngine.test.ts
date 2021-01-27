@@ -5,6 +5,7 @@ const candidateAddr = '0x8a88c59bf15451f9deb1d62f7734fece2002668e'.toLowerCase()
 const candidatePubKey =
   'BKjr6wO34Vif9oJHK1/AbMCLHVpvJui3Nx3hLwuOfzwx1Th4H4G0I4liGEC3qKsf8KOd078gYFTK+41n+KhDTzk=:::uH2sc+WgsrxPs91LBy8pIBEjM5I7wNPtSwRSNa83wo4V9iX3RmUmkEPq1QRv4wwRbosNO1RFJ/r64bwdSKK1VwA=';
 const candidateName = 'tester';
+const candidateDesc = 'tester desc';
 const candidateIP = '1.2.3.4';
 const candidatePort = 8670;
 const bucketID = '0xd75eb6c42a73533f961c38fe2b87bb3615db7ff8e19c0d808c046e7a25d9a413';
@@ -13,6 +14,7 @@ const timestamp = 1567898765;
 const commission = 200; // 2%
 const nonce = 123456;
 const lockEpoch = 100;
+const autobid = 100;
 const releaseEpoch = 200;
 const mtrAmount = 20 * 1e18;
 const mtrgAmount = '100000';
@@ -22,13 +24,15 @@ describe('script engine', () => {
     const scriptDataBuffer = ScriptEngine.getCandidateData(
       candidateAddr,
       candidateName,
+      candidateDesc,
       candidatePubKey,
       candidateIP,
       candidatePort,
       amount,
       commission,
       timestamp,
-      nonce
+      nonce,
+      autobid
     );
     const scriptData = '0x' + scriptDataBuffer.toString('hex');
     expect(scriptData).equal(
@@ -117,6 +121,7 @@ describe('script engine', () => {
     const scriptDataBuffer = ScriptEngine.getCandidateUpdateData(
       candidateAddr,
       candidateName,
+      candidateDesc,
       candidatePubKey,
       candidateIP,
       candidatePort,
@@ -161,6 +166,7 @@ describe('script engine', () => {
       holderAddr,
       candidateAddr,
       candidateName,
+      candidateDesc,
       candidatePubKey,
       candidateIP,
       candidatePort,
@@ -223,7 +229,7 @@ describe('script engine', () => {
   it('should decode script data by func', () => {
     const scriptData = ScriptEngine.decodeScriptData(
       Buffer.from(
-        'deadbeeff9012dc4808203e8b90125f90122078080941de8ca2f973d026300af89041b0ecb1c0803a7e6941de8ca2f973d026300af89041b0ecb1c0803a7e683747474b8b34241433661675565397066714667664950426b7469394b31302f464b4343636933312b3046693351326e4f3242316f656f485569316643366666616841636e4747676e2f3178575637767177457766335569486c4b67493d3a3a3a6731497a2b6932782f6552786a546b3849586547364e56346565476243517438584b7a4d4c4c48565735576c50504756454c41445151483530787a2b624a78464670364a5a5a7a513247425232633936746453306141453d87312e322e332e348221dea0000000000000000000000000000000000000000000000000000000000000000080018401406f40870b5211034cdcd080',
+        'deadbeeff90144c4808203e8b9013cf9013903808405f5e1009403aa4784c850265fdc4260412c80d2551f329e0c9403aa4784c850265fdc4260412c80d2551f329e0c856361726f6c856361726f6cb8b3424258596f6c584e5a394179784c4439472f4c715269382f633353566b6c4430436e474f5452324778314743544d4576493673742f4145336a666966336659447a4342632f504f654b57547632524d6153385433414a633d3a3a3a62764a3949513658424b395974534e4f7342395a776a5279375a2b58672f672f4d51426639444474727a3567546e7063634b4e4f47673857315471585a7268614476346e2f43594b62795a736669496a4f7869444d41413d8c31382e3137362e37302e35398221dea0000000000000000000000000000000000000000000000000000000000000000089878678326eac90000001806487057db54f84f86280',
         'hex'
       )
     );
