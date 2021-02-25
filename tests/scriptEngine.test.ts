@@ -20,6 +20,36 @@ const mtrAmount = 20 * 1e18;
 const mtrgAmount = '100000';
 
 describe('script engine', () => {
+  it('toJSON', () => {
+    const sbody = new ScriptEngine.StakingBody(
+      ScriptEngine.StakingOpCode.Candidate,
+      ScriptEngine.Option.Empty,
+      holderAddr,
+      candidateAddr,
+      candidateName,
+      candidateDesc,
+      candidatePubKey,
+      candidateIP,
+      candidatePort,
+      ScriptEngine.EMPTY_BYTE32,
+      amount,
+      ScriptEngine.Token.MeterGov,
+      timestamp,
+      nonce
+    );
+    const abody = new ScriptEngine.AuctionBody(
+      ScriptEngine.AuctionOpCode.Bid,
+      ScriptEngine.Option.Empty,
+      ScriptEngine.EMPTY_BYTE32,
+      holderAddr,
+      amount,
+      timestamp,
+      nonce
+    );
+    console.log('Staking Body JSON:', ScriptEngine.jsonFromStakingBody(sbody));
+    console.log('Auction Body JSON:', ScriptEngine.jsonFromAuctionBody(abody));
+  });
+
   it('candidate', () => {
     const scriptDataBuffer = ScriptEngine.getCandidateData(
       candidateAddr,
@@ -161,7 +191,7 @@ describe('script engine', () => {
 
   it('should encode and decode staking body', () => {
     const body = new ScriptEngine.StakingBody(
-      ScriptEngine.OpCode.StakingCandidate,
+      ScriptEngine.StakingOpCode.Candidate,
       ScriptEngine.Option.Empty,
       holderAddr,
       candidateAddr,
@@ -195,7 +225,7 @@ describe('script engine', () => {
 
   it('should encode and decode auction body', () => {
     const body = new ScriptEngine.AuctionBody(
-      ScriptEngine.OpCode.AuctionBid,
+      ScriptEngine.AuctionOpCode.Bid,
       ScriptEngine.Option.Empty,
       ScriptEngine.EMPTY_BYTE32,
       holderAddr,
@@ -207,7 +237,7 @@ describe('script engine', () => {
     console.log('Auction Bid Payload: ', data.toString('hex'));
     const body2 = new RLP(ScriptEngine.AuctionBodyProfile).decode(data);
     console.log(body2);
-    expect(body2.opCode).equal(ScriptEngine.OpCode.AuctionBid);
+    expect(body2.opCode).equal(ScriptEngine.AuctionOpCode.Bid);
     expect(body2.option).equal(ScriptEngine.Option.Empty);
     expect('0x' + body2.auctionID.toString('hex')).equal(ScriptEngine.EMPTY_BYTE32);
     expect('0x' + body2.bidder.toString('hex')).equal(holderAddr);

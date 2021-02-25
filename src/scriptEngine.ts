@@ -22,36 +22,46 @@ export namespace ScriptEngine {
     MeterGov = 1,
   }
 
-  export enum OpCode {
-    // staking
-    StakingBound = 1,
-    StakingUnbound = 2,
-    StakingCandidate = 3,
-    StakingUncandidate = 4,
-    StakingDelegate = 5,
-    StakingUndelegate = 6,
-    StakingCandidateUpdate = 7,
-
-    SlashingBailOut = 102,
-
-    // auction
-    AuctionStart = 1,
-    AuctionEnd = 2,
-    AuctionBid = 3, //
-
-    // account lock
-    AccountLockAdd = 1, // only allowed in kblock
-    AccountLockRemove = 2, // only allowed in kblock
-    AccountLockTransfer = 3,
-    AccountLockGoverning = 4, // only allowed in kblock
+  export enum StakingOpCode {
+    Bound = 1,
+    Unbound = 2,
+    Candidate = 3,
+    Uncandidate = 4,
+    Delegate = 5,
+    Undelegate = 6,
+    CandidateUpdate = 7,
+    DelegateStats = 101,
+    BailOut = 102,
+    FlushAllStats = 103,
+    Governing = 10001,
   }
 
-  export enum Option {
+  export enum StakingOption {
     Empty = 0,
+    // staking bound
     OneWeekLock = 1,
-    twoWeekLock = 2,
-    threeWeekLock = 3,
-    fourWeekLock = 4,
+    TwoWeekLock = 2,
+    ThreeWeekLock = 3,
+    FourWeekLock = 4,
+  }
+
+  export enum AuctionOpCode {
+    Start = 1,
+    End = 2,
+    Bid = 3, //
+  }
+
+  export enum AuctionOption {
+    Userbid = 0,
+    Autobid = 1,
+  }
+
+  export enum AccountLockOpCode {
+    // account lock
+    Add = 1, // only allowed in kblock
+    Remove = 2, // only allowed in kblock
+    Transfer = 3,
+    Governing = 4, // only allowed in kblock
   }
 
   function getRandomInt(max: number): number {
@@ -109,11 +119,15 @@ export namespace ScriptEngine {
   }
 
   export function decodeStakingBody(buffer: Buffer): StakingBody {
-    return new RLP(StakingBodyProfile).decode(buffer);
+    return new RLP(StakingBodyProfile).decode(buffer) as StakingBody;
   }
 
   export function decodeAuctionBody(buffer: Buffer): AuctionBody {
-    return new RLP(AuctionBodyProfile).decode(buffer);
+    return new RLP(AuctionBodyProfile).decode(buffer) as AuctionBody;
+  }
+
+  export function decodeAccountLockBody(buffer: Buffer): AccountLockBody {
+    return new RLP(AccountLockBodyProfile).decode(buffer) as AccountLockBody;
   }
 
   export const ScriptDataProfile: RLP.Profile = {
@@ -181,7 +195,7 @@ export namespace ScriptEngine {
     ],
   };
   export class StakingBody {
-    public opCode: OpCode;
+    public opCode: StakingOpCode;
     public version: number;
     public option: number;
     public holderAddr: Buffer;
@@ -200,7 +214,7 @@ export namespace ScriptEngine {
     public extra: Buffer;
 
     constructor(
-      op: OpCode,
+      op: StakingOpCode,
       option: number,
       holderAddr: string,
       candidateAddr: string,
@@ -277,20 +291,21 @@ export namespace ScriptEngine {
     public encode(): Buffer {
       return new RLP(StakingBodyProfile).encode(this);
     }
+  }
 
-    public toJSON(): object {
-      return {
-        ...this,
-        bucketID: '0x' + this.bucketID.toString('hex'),
-        candidateAddr: '0x' + this.candidateAddr.toString('hex'),
-        candidateDescription: this.candidateDescription.toString(),
-        candidateIP: this.candidateIP.toString(),
-        candidateName: this.candidateName.toString(),
-        candidatePubKey: this.candidatePubKey.toString(),
-        extra: this.extra.toString('hex'),
-        amount: new BigNumber(this.amount).toFixed(),
-      };
-    }
+  export function jsonFromStakingBody(sb: StakingBody): any {
+    return {
+      ...sb,
+      bucketID: '0x' + sb.bucketID.toString('hex'),
+      holderAddr: '0x' + sb.holderAddr.toString('hex'),
+      candidateAddr: '0x' + sb.candidateAddr.toString('hex'),
+      candidateDescription: sb.candidateDescription.toString(),
+      candidateIP: sb.candidateIP.toString(),
+      candidateName: sb.candidateName.toString(),
+      candidatePubKey: sb.candidatePubKey.toString(),
+      extra: sb.extra.toString('hex'),
+      amount: new BigNumber(sb.amount).toFixed(),
+    };
   }
 
   export function getBoundData(
@@ -303,7 +318,7 @@ export namespace ScriptEngine {
     autobid = 0
   ): Buffer {
     const body = new StakingBody(
-      OpCode.StakingBound,
+      StakingOpCode.Bound,
       option,
       holderAddr,
       candidateAddr,
@@ -330,8 +345,8 @@ export namespace ScriptEngine {
     nonce = 0
   ): Buffer {
     const body = new StakingBody(
-      OpCode.StakingUnbound,
-      Option.Empty,
+      StakingOpCode.Unbound,
+      StakingOption.Empty,
       holderAddr,
       '', // candidate addr
       '', // name
@@ -368,7 +383,7 @@ export namespace ScriptEngine {
       option = commission * 1e5;
     }
     const body = new StakingBody(
-      OpCode.StakingCandidate,
+      StakingOpCode.Candidate,
       option,
       holderAddr,
       holderAddr,
@@ -390,8 +405,8 @@ export namespace ScriptEngine {
 
   export function getUncandidateData(candidateAddr: string, timestamp = 0, nonce = 0): Buffer {
     const body = new StakingBody(
-      OpCode.StakingUncandidate,
-      Option.Empty,
+      StakingOpCode.Uncandidate,
+      StakingOption.Empty,
       EMPTY_ADDRESS,
       candidateAddr, // candidate addr
       '', // name
@@ -419,8 +434,8 @@ export namespace ScriptEngine {
     autobid = 0
   ): Buffer {
     const body = new StakingBody(
-      OpCode.StakingDelegate,
-      Option.Empty,
+      StakingOpCode.Delegate,
+      StakingOption.Empty,
       holderAddr,
       candidateAddr,
       '', // name
@@ -447,8 +462,8 @@ export namespace ScriptEngine {
     nonce = 0
   ): Buffer {
     const body = new StakingBody(
-      OpCode.StakingUndelegate,
-      Option.Empty,
+      StakingOpCode.Undelegate,
+      StakingOption.Empty,
       holderAddr,
       '', // candidate addr
       '', // name
@@ -484,7 +499,7 @@ export namespace ScriptEngine {
       option = commission * 1e5;
     }
     const body = new StakingBody(
-      OpCode.StakingCandidateUpdate,
+      StakingOpCode.CandidateUpdate,
       option,
       holderAddr,
       holderAddr,
@@ -506,8 +521,8 @@ export namespace ScriptEngine {
 
   export function getBailOutData(holderAddr: string, timestamp = 0, nonce = 0): Buffer {
     const body = new StakingBody(
-      OpCode.SlashingBailOut,
-      Option.Empty,
+      StakingOpCode.BailOut,
+      StakingOption.Empty,
       holderAddr,
       holderAddr,
       '', // name
@@ -539,6 +554,7 @@ export namespace ScriptEngine {
       { name: 'startEpoch', kind: new RLP.NumericKind() },
       { name: 'endHeight', kind: new RLP.NumericKind() },
       { name: 'endEpoch', kind: new RLP.NumericKind() },
+      { name: 'sequence', kind: new RLP.NumericKind() },
       { name: 'auctionID', kind: new RLP.BufferKind() },
       { name: 'bidder', kind: new RLP.BufferKind() },
       { name: 'amount', kind: new RLP.NumericKind() },
@@ -550,13 +566,14 @@ export namespace ScriptEngine {
   };
 
   export class AuctionBody {
-    public opCode: OpCode;
+    public opCode: AuctionOpCode;
     public version: number;
-    public option: Option;
+    public option: AuctionOption;
     public startHeight: number;
     public startEpoch: number;
     public endHeight: number;
     public endEpoch: number;
+    public sequence: number;
     public auctionID: Buffer;
     public bidder: Buffer;
     public amount: string;
@@ -566,7 +583,7 @@ export namespace ScriptEngine {
     public nonce: number;
 
     constructor(
-      opCode: OpCode,
+      opCode: AuctionOpCode,
       option: number,
       auctionID: string,
       bidder: string,
@@ -598,6 +615,7 @@ export namespace ScriptEngine {
       this.startEpoch = 0;
       this.endHeight = 0;
       this.endEpoch = 0;
+      this.sequence = 0;
       this.auctionID = Buffer.from(auctionIDStr, 'hex');
       this.bidder = Buffer.from(bidderStr, 'hex');
       this.amount = amount.toString();
@@ -618,16 +636,16 @@ export namespace ScriptEngine {
     public encode(): Buffer {
       return new RLP(AuctionBodyProfile).encode(this);
     }
+  }
 
-    public toJSON(): object {
-      return {
-        ...this,
-        auctionID: '0x' + this.auctionID.toString('hex'),
-        bidder: '0x' + this.bidder.toString('hex'),
-        amount: new BigNumber(this.amount).toFixed(),
-        reserveAmount: new BigNumber(this.reserveAmount).toFixed(),
-      };
-    }
+  export function jsonFromAuctionBody(ab: AuctionBody): object {
+    return {
+      ...ab,
+      auctionID: '0x' + ab.auctionID.toString('hex'),
+      bidder: '0x' + ab.bidder.toString('hex'),
+      amount: new BigNumber(ab.amount).toFixed(),
+      reserveAmount: new BigNumber(ab.reserveAmount).toFixed(),
+    };
   }
 
   export function getBidData(
@@ -637,8 +655,8 @@ export namespace ScriptEngine {
     nonce = 0
   ): Buffer {
     const body = new AuctionBody(
-      OpCode.AuctionBid,
-      Option.Empty,
+      AuctionOpCode.Bid,
+      AuctionOption.Userbid,
       EMPTY_BYTE32,
       bidder,
       amount,
@@ -667,7 +685,7 @@ export namespace ScriptEngine {
     ],
   };
   export class AccountLockBody {
-    public opCode: OpCode;
+    public opCode: AccountLockOpCode;
     public version: number;
     public option: number;
     public lockEpoch: number;
@@ -679,7 +697,7 @@ export namespace ScriptEngine {
     public memo: Buffer;
 
     constructor(
-      op: OpCode,
+      op: AccountLockOpCode,
       lockEpoch: number,
       releaseEpoch: number,
       fromAddr: string,
@@ -717,17 +735,17 @@ export namespace ScriptEngine {
     public encode(): Buffer {
       return new RLP(AccountLockBodyProfile).encode(this);
     }
+  }
 
-    public toJSON(): object {
-      return {
-        ...this,
-        fromAddr: '0x' + this.fromAddr.toString('hex'),
-        toAddr: '0x' + this.fromAddr.toString('hex'),
-        meterAmount: new BigNumber(this.meterAmount).toFixed(),
-        meterGovAmount: new BigNumber(this.meterGovAmount).toFixed(),
-        memo: this.memo.toString(),
-      };
-    }
+  export function jsonFromAccountLockBody(alb: AccountLockBody): object {
+    return {
+      ...alb,
+      fromAddr: '0x' + alb.fromAddr.toString('hex'),
+      toAddr: '0x' + alb.fromAddr.toString('hex'),
+      meterAmount: new BigNumber(alb.meterAmount).toFixed(),
+      meterGovAmount: new BigNumber(alb.meterGovAmount).toFixed(),
+      memo: alb.memo.toString(),
+    };
   }
 
   export function getLockedTransferData(
@@ -740,7 +758,7 @@ export namespace ScriptEngine {
     memo: string
   ) {
     const body = new AccountLockBody(
-      OpCode.AccountLockTransfer,
+      AccountLockOpCode.Transfer,
       lockEpoch,
       releaseEpoch,
       fromAddr,
