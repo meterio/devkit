@@ -86,6 +86,17 @@ export namespace ScriptEngine {
     }
   }
 
+  export function IsScriptEngineData(hexStr: string): boolean {
+    let str = hexStr;
+    if (hexStr.startsWith('0x')) {
+      str = hexStr.replace('0x', '');
+    }
+    const enginePrefix = SCRIPT_ENGINE_PREFIX.toString('hex');
+    const dataPrefix = SCRIPT_DATA_PREFIX.toString('hex');
+
+    return str.startsWith(enginePrefix + dataPrefix);
+  }
+
   export function encodeScriptData(moduleID: ModuleID, body: StakingBody | AuctionBody): Buffer {
     switch (moduleID) {
       case ModuleID.Staking:
