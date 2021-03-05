@@ -1,4 +1,6 @@
 import { expect } from 'chai';
+import { Script } from 'vm';
+import BigNumber from 'bignumber.js';
 import { ScriptEngine, RLP } from '../src';
 const holderAddr = '0x0205c2D862cA051010698b69b54278cbAf945C0b'.toLowerCase();
 const candidateAddr = '0x8a88c59bf15451f9deb1d62f7734fece2002668e'.toLowerCase();
@@ -23,7 +25,7 @@ describe('script engine', () => {
   it('toJSON', () => {
     const sbody = new ScriptEngine.StakingBody(
       ScriptEngine.StakingOpCode.Candidate,
-      ScriptEngine.Option.Empty,
+      ScriptEngine.StakingOption.Empty,
       holderAddr,
       candidateAddr,
       candidateName,
@@ -39,7 +41,7 @@ describe('script engine', () => {
     );
     const abody = new ScriptEngine.AuctionBody(
       ScriptEngine.AuctionOpCode.Bid,
-      ScriptEngine.Option.Empty,
+      ScriptEngine.StakingOption.Empty,
       ScriptEngine.EMPTY_BYTE32,
       holderAddr,
       amount,
@@ -65,20 +67,18 @@ describe('script engine', () => {
       autobid
     );
     const scriptData = '0x' + scriptDataBuffer.toString('hex');
-    expect(scriptData).equal(
-      '0xffffffffdeadbeeff90138c4808203e8b90130f9012d03808401312d00948a88c59bf15451f9deb1d62f7734fece2002668e948a88c59bf15451f9deb1d62f7734fece2002668e86746573746572b8b3424b6a7236774f3334566966396f4a484b312f41624d434c485670764a7569334e7833684c77754f667a7778315468344834473049346c6947454333714b7366384b4f64303738675946544b2b34316e2b4b6844547a6b3d3a3a3a75483273632b5767737278507339314c427938704942456a4d354937774e5074537752534e613833776f345639695833526d556d6b4550713151527634777752626f734e4f3152464a2f723634627764534b4b315677413d87312e322e332e348221dea00000000000000000000000000000000000000000000000000000000000000000884563918244f4000001845d743c8d8301e24080'
-    );
-    const sd = ScriptEngine.decodeScriptData(scriptDataBuffer);
-    const body = ScriptEngine.decodeStakingBody(sd.payload);
-    console.log('STAKING BODY !!: ', body);
+    const decoded = ScriptEngine.decodeScriptData(scriptData);
+    const body = ScriptEngine.decodeStakingBody(decoded.payload);
+    expect(candidateAddr).equal('0x' + body.holderAddr.toString('hex'));
+    expect(candidateAddr).equal('0x' + body.candidateAddr.toString('hex'));
   });
 
   it('uncandidate', () => {
     const scriptDataBuffer = ScriptEngine.getUncandidateData(candidateAddr, timestamp, nonce);
     const scriptData = '0x' + scriptDataBuffer.toString('hex');
-    expect(scriptData).equal(
-      '0xffffffffdeadbeeff867c4808203e8b860f85e048080940000000000000000000000000000000000000000948a88c59bf15451f9deb1d62f7734fece2002668e80808080a000000000000000000000000000000000000000000000000000000000000000008001845d743c8d8301e24080'
-    );
+    const decoded = ScriptEngine.decodeScriptData(scriptData);
+    const body = ScriptEngine.decodeStakingBody(decoded.payload);
+    expect(candidateAddr).equal('0x' + body.candidateAddr.toString('hex'));
   });
 
   it('delegate', () => {
@@ -91,9 +91,10 @@ describe('script engine', () => {
       nonce
     );
     const scriptData = '0x' + scriptDataBuffer.toString('hex');
-    expect(scriptData).equal(
-      '0xffffffffdeadbeeff86fc4808203e8b868f866058080940205c2d862ca051010698b69b54278cbaf945c0b948a88c59bf15451f9deb1d62f7734fece2002668e80808080a0d75eb6c42a73533f961c38fe2b87bb3615db7ff8e19c0d808c046e7a25d9a413884563918244f4000001845d743c8d8301e24080'
-    );
+    const decoded = ScriptEngine.decodeScriptData(scriptData);
+    const body = ScriptEngine.decodeStakingBody(decoded.payload);
+    expect(holderAddr).equal('0x' + body.holderAddr.toString('hex'));
+    expect(candidateAddr).equal('0x' + body.candidateAddr.toString('hex'));
   });
 
   it('undelegate', () => {
@@ -105,14 +106,14 @@ describe('script engine', () => {
       nonce
     );
     const scriptData = '0x' + scriptDataBuffer.toString('hex');
-    expect(scriptData).equal(
-      '0xffffffffdeadbeeff86fc4808203e8b868f866068080940205c2d862ca051010698b69b54278cbaf945c0b94000000000000000000000000000000000000000080808080a0d75eb6c42a73533f961c38fe2b87bb3615db7ff8e19c0d808c046e7a25d9a413884563918244f4000001845d743c8d8301e24080'
-    );
+    const decoded = ScriptEngine.decodeScriptData(scriptData);
+    const body = ScriptEngine.decodeStakingBody(decoded.payload);
+    expect(holderAddr).equal('0x' + body.holderAddr.toString('hex'));
   });
 
   it('bound', () => {
     const scriptDataBuffer = ScriptEngine.getBoundData(
-      ScriptEngine.Option.OneWeekLock,
+      ScriptEngine.StakingOption.OneWeekLock,
       holderAddr,
       candidateAddr,
       amount,
@@ -120,9 +121,10 @@ describe('script engine', () => {
       nonce
     );
     const scriptData = '0x' + scriptDataBuffer.toString('hex');
-    expect(scriptData).equal(
-      '0xffffffffdeadbeeff86fc4808203e8b868f866018001940205c2d862ca051010698b69b54278cbaf945c0b948a88c59bf15451f9deb1d62f7734fece2002668e80808080a00000000000000000000000000000000000000000000000000000000000000000884563918244f4000001845d743c8d8301e24080'
-    );
+    const decoded = ScriptEngine.decodeScriptData(scriptData);
+    const body = ScriptEngine.decodeStakingBody(decoded.payload);
+    expect(holderAddr).equal('0x' + body.holderAddr.toString('hex'));
+    expect(candidateAddr).equal('0x' + body.candidateAddr.toString('hex'));
   });
 
   it('unbound', () => {
@@ -134,17 +136,18 @@ describe('script engine', () => {
       nonce
     );
     const scriptData = '0x' + scriptDataBuffer.toString('hex');
-    expect(scriptData).equal(
-      '0xffffffffdeadbeeff86fc4808203e8b868f866028080940205c2d862ca051010698b69b54278cbaf945c0b94000000000000000000000000000000000000000080808080a0d75eb6c42a73533f961c38fe2b87bb3615db7ff8e19c0d808c046e7a25d9a413884563918244f4000001845d743c8d8301e24080'
-    );
+    const decoded = ScriptEngine.decodeScriptData(scriptData);
+    const body = ScriptEngine.decodeStakingBody(decoded.payload);
+    expect(holderAddr).equal('0x' + body.holderAddr.toString('hex'));
   });
 
   it('bid', () => {
     const scriptDataBuffer = ScriptEngine.getBidData(holderAddr, amount, timestamp, nonce);
     const scriptData = '0x' + scriptDataBuffer.toString('hex');
-    expect(scriptData).equal(
-      '0xffffffffdeadbeeff859c4808203e9b852f85003808080808080a00000000000000000000000000000000000000000000000000000000000000000940205c2d862ca051010698b69b54278cbaf945c0b884563918244f4000080845d743c8d8301e240'
-    );
+    const decoded = ScriptEngine.decodeScriptData(scriptData);
+    const body = ScriptEngine.decodeAuctionBody(decoded.payload);
+    expect(holderAddr).equal('0x' + body.bidder.toString('hex'));
+    expect(new BigNumber(amount).toFixed()).equal(new BigNumber(body.amount).toFixed());
   });
 
   it('candidateUpdate', () => {
@@ -160,17 +163,17 @@ describe('script engine', () => {
       nonce
     );
     const scriptData = '0x' + scriptDataBuffer.toString('hex');
-    expect(scriptData).equal(
-      '0xffffffffdeadbeeff90130c4808203e8b90128f9012507808401312d00948a88c59bf15451f9deb1d62f7734fece2002668e948a88c59bf15451f9deb1d62f7734fece2002668e86746573746572b8b3424b6a7236774f3334566966396f4a484b312f41624d434c485670764a7569334e7833684c77754f667a7778315468344834473049346c6947454333714b7366384b4f64303738675946544b2b34316e2b4b6844547a6b3d3a3a3a75483273632b5767737278507339314c427938704942456a4d354937774e5074537752534e613833776f345639695833526d556d6b4550713151527634777752626f734e4f3152464a2f723634627764534b4b315677413d87312e322e332e348221dea000000000000000000000000000000000000000000000000000000000000000008001845d743c8d8301e24080'
-    );
+    const decoded = ScriptEngine.decodeScriptData(scriptData);
+    const body = ScriptEngine.decodeStakingBody(decoded.payload);
+    expect(candidateAddr).equal('0x' + body.holderAddr.toString('hex'));
   });
 
   it('bailOut', () => {
     const scriptDataBuffer = ScriptEngine.getBailOutData(holderAddr, timestamp, nonce);
     const scriptData = '0x' + scriptDataBuffer.toString('hex');
-    expect(scriptData).equal(
-      '0xffffffffdeadbeeff867c4808203e8b860f85e668080940205c2d862ca051010698b69b54278cbaf945c0b940205c2d862ca051010698b69b54278cbaf945c0b80808080a000000000000000000000000000000000000000000000000000000000000000008001845d743c8d8301e24080'
-    );
+    const decoded = ScriptEngine.decodeScriptData(scriptData);
+    const body = ScriptEngine.decodeStakingBody(decoded.payload);
+    expect(holderAddr).equal('0x' + body.holderAddr.toString('hex'));
   });
 
   it('lockedTransfer', () => {
@@ -189,83 +192,10 @@ describe('script engine', () => {
     );
   });
 
-  it('should encode and decode staking body', () => {
-    const body = new ScriptEngine.StakingBody(
-      ScriptEngine.StakingOpCode.Candidate,
-      ScriptEngine.Option.Empty,
-      holderAddr,
-      candidateAddr,
-      candidateName,
-      candidateDesc,
-      candidatePubKey,
-      candidateIP,
-      candidatePort,
-      ScriptEngine.EMPTY_BYTE32,
-      amount,
-      ScriptEngine.Token.MeterGov,
-      timestamp,
-      nonce
-    );
-    const data = new RLP(ScriptEngine.StakingBodyProfile).encode(body);
-    console.log('Staking Candidate Payload: ', '0x' + data.toString('hex'));
-    const body2 = new RLP(ScriptEngine.StakingBodyProfile).decode(data);
-    console.log(body2);
-    expect('0x' + body2.holderAddr.toString('hex')).equal(holderAddr);
-    expect('0x' + body2.candidateAddr.toString('hex')).equal(candidateAddr);
-    expect(body2.candidateName.toString()).equal(candidateName);
-    expect(body2.candidatePubKey.toString()).equal(candidatePubKey);
-    expect(body2.candidateIP.toString()).equal(candidateIP);
-    expect(body2.candidatePort).equal(candidatePort);
-    expect('0x' + body2.bucketID.toString('hex')).equal(ScriptEngine.EMPTY_BYTE32);
-    expect(parseInt(body2.amount, 16)).equal(amount);
-    expect(body2.token).equal(ScriptEngine.Token.MeterGov);
-    expect(body2.nonce).equal(nonce);
-    expect(body2.timestamp).equal(timestamp);
-  });
-
-  it('should encode and decode auction body', () => {
-    const body = new ScriptEngine.AuctionBody(
-      ScriptEngine.AuctionOpCode.Bid,
-      ScriptEngine.Option.Empty,
-      ScriptEngine.EMPTY_BYTE32,
-      holderAddr,
-      amount,
-      timestamp,
-      nonce
-    );
-    const data = new RLP(ScriptEngine.AuctionBodyProfile).encode(body);
-    console.log('Auction Bid Payload: ', data.toString('hex'));
-    const body2 = new RLP(ScriptEngine.AuctionBodyProfile).decode(data);
-    console.log(body2);
-    expect(body2.opCode).equal(ScriptEngine.AuctionOpCode.Bid);
-    expect(body2.option).equal(ScriptEngine.Option.Empty);
-    expect('0x' + body2.auctionID.toString('hex')).equal(ScriptEngine.EMPTY_BYTE32);
-    expect('0x' + body2.bidder.toString('hex')).equal(holderAddr);
-    expect(parseInt(body2.amount, 16)).equal(amount);
-    expect(body2.timestamp).equal(timestamp);
-    expect(body2.nonce).equal(nonce);
-  });
-
-  it('should decode script data by profile', () => {
-    const dec = new RLP(ScriptEngine.ScriptDataProfile).decode(
-      Buffer.from(
-        'f90141c4808203e8b90139f901360380019440df6f787bf8bd3fba3b2ef5a742ae0c993f14189440df6f787bf8bd3fba3b2ef5a742ae0c993f1418887869616f68616e32b8b4424d7845445839506d6e61505a61523935517463516f654c7959586444562b54753375334a7a3973374c52316370466c484f566830414a473874784d36374a5678634a67453848782f41422b444546364c426d7a424a4d3d3a3a3a0a48516b63646d4c30756f754f6d2f4c4f6e7a4c396e68362b4e6a6c486434334e38733168534c5a6e5346494854324e7472797979323138694b454e374f48785339494d4844395846586d794c384643414d542b697851453d8c2035322e37342e3131332e348221dea00000000000000000000000000000000000000000000000000000000000000000891043561a882930000001845ed5899d870926ebe848f0f680',
-        'hex'
-      )
-    );
-    console.log('by profile', dec);
-  });
-
-  it('should decode script data by func', () => {
-    const scriptData = ScriptEngine.decodeScriptData(
-      Buffer.from(
-        'deadbeeff90144c4808203e8b9013cf9013903808405f5e1009403aa4784c850265fdc4260412c80d2551f329e0c9403aa4784c850265fdc4260412c80d2551f329e0c856361726f6c856361726f6cb8b3424258596f6c584e5a394179784c4439472f4c715269382f633353566b6c4430436e474f5452324778314743544d4576493673742f4145336a666966336659447a4342632f504f654b57547632524d6153385433414a633d3a3a3a62764a3949513658424b395974534e4f7342395a776a5279375a2b58672f672f4d51426639444474727a3567546e7063634b4e4f47673857315471585a7268614476346e2f43594b62795a736669496a4f7869444d41413d8c31382e3137362e37302e35398221dea0000000000000000000000000000000000000000000000000000000000000000089878678326eac90000001806487057db54f84f86280',
-        'hex'
-      )
-    );
-    if (scriptData.header.modId === ScriptEngine.ModuleID.Staking) {
-      const body = ScriptEngine.decodeStakingBody(scriptData.payload);
-      console.log('STAKING BODY: ', body);
-    }
+  it('should decode staking extra data', () => {
+    const extra =
+      'f90156de9468ba0c4decd7ffdca9e78a0a649b97199ae2cf3d88bc0b65b36dd41a45de9434bd9720f4d83db2c8d7de87ec38b7832301ca67888bb63d0d10ebc837de9406423a48178615cf42f97b8e9b6f5351e351f652888bb638371a150dcfde94e558d8c1831a8e02e5a7a689881f98a238a7f91688bc074dec2cc71dbcde94105a26beb53c894d6de2b5929efbf4216b77c1a288bbf94f687bf5c9d0dd949e26622cf2e902e06a740fca6ea7f99f8d5f0b3b87a0934cf2b85c76de94d78534f06c64e07a1f3b6022c33f0787c4888e8f880643f12d5a726353df94be7acad0aa02ed06c7f3c27c6172b36e93d706628904c3bac89076616446de94a31964e0fc0acbbf1a883c4d62b48482c3dbf973880c8c64fad10370c4de942b1003d406d30888be8bc645e542dec79607bad5888bb639f8bd6575bedf94b18ce9f418efb94aab45d1d00938d04741a04f798902bd9c2d48ffaa7e47';
+    const decodedExtra = ScriptEngine.decodeStakingGoverningExtra(extra);
+    console.log(decodedExtra);
   });
 });

@@ -114,8 +114,14 @@ export namespace ScriptEngine {
     }
   }
 
-  export function decodeScriptData(buffer: Buffer): ScriptData {
-    let hexStr = buffer.toString('hex');
+  export function decodeScriptData(input: Buffer | string): ScriptData {
+    let buf: Buffer;
+    if (typeof input === 'string') {
+      buf = Buffer.from(input.replace('0x', ''), 'hex');
+    } else {
+      buf = input;
+    }
+    let hexStr = buf.toString('hex');
     const sePrefixStr = SCRIPT_ENGINE_PREFIX.toString('hex');
     const sdPrefixStr = SCRIPT_DATA_PREFIX.toString('hex');
     if (hexStr.startsWith(sePrefixStr)) {
@@ -123,22 +129,50 @@ export namespace ScriptEngine {
     }
 
     if (!hexStr.startsWith(sdPrefixStr)) {
-      throw new DecodeError('could not decode script data: 0x' + buffer.toString('hex'));
+      throw new DecodeError('could not decode script data: 0x' + buf.toString('hex'));
     }
     const truncated = Buffer.from(hexStr.substring(sdPrefixStr.length), 'hex');
     return new RLP(ScriptDataProfile).decode(truncated);
   }
 
-  export function decodeStakingBody(buffer: Buffer): StakingBody {
-    return new RLP(StakingBodyProfile).decode(buffer) as StakingBody;
+  export function decodeStakingBody(input: Buffer | string): StakingBody {
+    let buf: Buffer;
+    if (typeof input === 'string') {
+      buf = Buffer.from(input.replace('0x', ''), 'hex');
+    } else {
+      buf = input;
+    }
+    return new RLP(StakingBodyProfile).decode(buf) as StakingBody;
   }
 
-  export function decodeAuctionBody(buffer: Buffer): AuctionBody {
-    return new RLP(AuctionBodyProfile).decode(buffer) as AuctionBody;
+  export function decodeAuctionBody(input: Buffer | string): AuctionBody {
+    let buf: Buffer;
+    if (typeof input === 'string') {
+      buf = Buffer.from(input.replace('0x', ''), 'hex');
+    } else {
+      buf = input;
+    }
+    return new RLP(AuctionBodyProfile).decode(buf) as AuctionBody;
   }
 
-  export function decodeAccountLockBody(buffer: Buffer): AccountLockBody {
-    return new RLP(AccountLockBodyProfile).decode(buffer) as AccountLockBody;
+  export function decodeAccountLockBody(input: Buffer | string): AccountLockBody {
+    let buf: Buffer;
+    if (typeof input === 'string') {
+      buf = Buffer.from(input.replace('0x', ''), 'hex');
+    } else {
+      buf = input;
+    }
+    return new RLP(AccountLockBodyProfile).decode(buf) as AccountLockBody;
+  }
+
+  export function decodeStakingGoverningExtra(input: Buffer | string): RewardInfo[] {
+    let buf: Buffer;
+    if (typeof input === 'string') {
+      buf = Buffer.from(input.replace('0x', ''), 'hex');
+    } else {
+      buf = input;
+    }
+    return new RLP(StakingGoverningExtraProfile).decode(buf) as RewardInfo[];
   }
 
   export const ScriptDataProfile: RLP.Profile = {
@@ -183,6 +217,24 @@ export namespace ScriptEngine {
   // ------------------------------------------
   //                STAKING
   // ------------------------------------------
+  export const StakingGoverningExtraProfile: RLP.Profile = {
+    name: 'stakingGoverningExtraProfile',
+    kind: {
+      item: [
+        { name: 'address', kind: new RLP.BufferKind() },
+        { name: 'amount', kind: new RLP.NumericKind() },
+      ],
+    },
+  };
+  export class RewardInfo {
+    public address: Buffer;
+    public amount: string;
+    constructor(address: Buffer, amount: string) {
+      this.address = address;
+      this.amount = amount;
+    }
+  }
+
   export const StakingBodyProfile: RLP.Profile = {
     name: 'stakingBodyProfile',
     kind: [
