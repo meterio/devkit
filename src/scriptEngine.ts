@@ -1,6 +1,7 @@
 import * as rlp from 'rlp';
 import { RLP } from './rlp';
 import BigNumber from 'bignumber.js';
+const blake = require('blakejs');
 
 export namespace ScriptEngine {
   export const SCRIPT_ENGINE_PREFIX = Buffer.from('ffffffff', 'hex');
@@ -173,6 +174,19 @@ export namespace ScriptEngine {
       buf = input;
     }
     return new RLP(StakingGoverningExtraProfile).decode(buf) as RewardInfo[];
+  }
+
+  export function getAuctionTxFromAuctionBody(body: AuctionBody): AuctionTx | undefined {
+    if (body.opCode === AuctionOpCode.Bid) {
+      return new AuctionTx(
+        '0x' + body.bidder.toString('hex'),
+        body.amount,
+        body.option,
+        body.timestamp,
+        body.nonce
+      );
+    }
+    return undefined;
   }
 
   export const ScriptDataProfile: RLP.Profile = {
@@ -607,6 +621,44 @@ export namespace ScriptEngine {
   // ------------------------------------------
   //                AUCTION
   // ------------------------------------------
+  export const AuctionTxProfile: RLP.Profile = {
+    name: 'acutionTx',
+    kind: [
+      { name: 'address', kind: new RLP.BufferKind() },
+      { name: 'amount', kind: new RLP.NumericKind() },
+      { name: 'type', kind: new RLP.NumericKind() },
+      { name: 'timestamp', kind: new RLP.NumericKind() },
+      { name: 'nonce', kind: new RLP.NumericKind() },
+    ],
+  };
+  export class AuctionTx {
+    public address: Buffer;
+    public amount: string;
+    public type: number;
+    public timestamp: number;
+    public nonce: string;
+
+    constructor(
+      address: string,
+      amount: string | number,
+      type: number,
+      timestamp: number,
+      nonce: string | number
+    ) {
+      this.address = Buffer.from(address.replace('0x', ''), 'hex');
+      this.amount = amount.toString();
+      this.type = type;
+      this.timestamp = timestamp;
+      this.nonce = nonce.toString();
+    }
+
+    ID() {
+      const bytes = new RLP(AuctionTxProfile).encode(this);
+      const idBuf = blake.blake2bHex(bytes, null, 32);
+      return '0x' + idBuf.toString('hex');
+    }
+  }
+
   export const AuctionBodyProfile: RLP.Profile = {
     name: 'auctionBody',
     kind: [

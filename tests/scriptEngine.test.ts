@@ -2,6 +2,7 @@ import { expect } from 'chai';
 import { Script } from 'vm';
 import BigNumber from 'bignumber.js';
 import { ScriptEngine, RLP } from '../src';
+import { time } from 'console';
 const holderAddr = '0x0205c2D862cA051010698b69b54278cbAf945C0b'.toLowerCase();
 const candidateAddr = '0x8a88c59bf15451f9deb1d62f7734fece2002668e'.toLowerCase();
 const candidatePubKey =
@@ -206,5 +207,29 @@ describe('script engine', () => {
       '0xffffffffdeadbeeff860c4808203e9b859f8570380018080808080a000000000000000000000000000000000000000000000000000000000000000009436c0bf41fbb28444a1f2f89d9da2b684ccea34508888d29c465a6eebff80808460423a6988dd2728cd0c498657';
     const decode = ScriptEngine.decodeScriptData(data);
     console.log(decode);
+  });
+
+  it('should generate auctionTx id', () => {
+    const address = '0x5e8126458b3f13d488d482adc00a8c4b9df5d3b6';
+    const amount = '16318600351042023020';
+    const type = 1;
+    const timestamp = 1615015651;
+    const nonce = '1952715685383062548';
+
+    const auctionTx = new ScriptEngine.AuctionTx(address, amount, type, timestamp, nonce);
+    const id = auctionTx.ID();
+    expect(id).equal('0x00396ef508fad3ac9ab8cc90536da1fbdf82ad4a9c2a51d1e4c9baf5932d424d');
+  });
+
+  it('should generate auctionTx id', () => {
+    const address = '0xf943a5fc2f2db7c1ca5218f7ba24472463d42239';
+    const amount = '14902984027677164012';
+    const type = 1;
+    const timestamp = 1615015651;
+    const nonce = '9913717879540574890';
+
+    const auctionTx = new ScriptEngine.AuctionTx(address, amount, type, timestamp, nonce);
+    const id = auctionTx.ID();
+    expect(id).equal('0x0072bd9859d9babc41ddb0e223fd9a6ef2feed120301c4869a11a78bc2216abb');
   });
 });
