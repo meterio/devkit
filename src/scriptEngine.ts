@@ -621,6 +621,56 @@ export namespace ScriptEngine {
   // ------------------------------------------
   //                AUCTION
   // ------------------------------------------
+  export const AuctionControlBlockProfile: RLP.Profile = {
+    name: 'auctionControlBlock',
+    kind: [
+      { name: 'startHeight', kind: new RLP.NumericKind() },
+      { name: 'startEpoch', kind: new RLP.NumericKind() },
+      { name: 'endHeight', kind: new RLP.NumericKind() },
+      { name: 'endEpoch', kind: new RLP.NumericKind() },
+      { name: 'rlsdMTRG', kind: new RLP.NumericKind() },
+      { name: 'rsvdMTRG', kind: new RLP.NumericKind() },
+      { name: 'rsvdPrice', kind: new RLP.NumericKind() },
+      { name: 'createTime', kind: new RLP.NumericKind() },
+    ],
+  };
+  export class AuctionControlBlock {
+    public startHeight: number;
+    public startEpoch: number;
+    public endHeight: number;
+    public endEpoch: number;
+    public rlsdMTRG: string;
+    public rsvdMTRG: string;
+    public rsvdPrice: string;
+    public createTime: number;
+
+    constructor(
+      startHeight: number,
+      startEpoch: number,
+      endHeight: number,
+      endEpoch: number,
+      rlsdMTRG: string | number,
+      rsvdMTRG: string | number,
+      rsvdPrice: string | number,
+      createTime: number
+    ) {
+      this.startHeight = startHeight;
+      this.startEpoch = startEpoch;
+      this.endHeight = endHeight;
+      this.endEpoch = endEpoch;
+      this.rlsdMTRG = rlsdMTRG.toString();
+      this.rsvdMTRG = rsvdMTRG.toString();
+      this.rsvdPrice = rsvdPrice.toString();
+      this.createTime = createTime;
+    }
+
+    ID(): string {
+      const bytes = new RLP(AuctionControlBlockProfile).encode(this);
+      const idBuf = blake.blake2bHex(bytes, null, 32);
+      return '0x' + idBuf.toString('hex');
+    }
+  }
+
   export const AuctionTxProfile: RLP.Profile = {
     name: 'acutionTx',
     kind: [
@@ -652,7 +702,7 @@ export namespace ScriptEngine {
       this.nonce = nonce.toString();
     }
 
-    ID() {
+    ID(): string {
       const bytes = new RLP(AuctionTxProfile).encode(this);
       const idBuf = blake.blake2bHex(bytes, null, 32);
       return '0x' + idBuf.toString('hex');

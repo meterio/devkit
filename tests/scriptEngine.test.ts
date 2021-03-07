@@ -232,4 +232,28 @@ describe('script engine', () => {
     const id = auctionTx.ID();
     expect(id).equal('0x0072bd9859d9babc41ddb0e223fd9a6ef2feed120301c4869a11a78bc2216abb');
   });
+
+  it('should generate auction cb id', () => {
+    const startHeight = 254729;
+    const startEpoch = 145;
+    const endHeight = 282574;
+    const endEpoch = 168;
+    const rlsdMTRG = '5483957256648424329397';
+    const rsvdMTRG = '0';
+    const rsvdPrice = '500000000000000000';
+    const createTime = 1614924384;
+    const auctionCB = new ScriptEngine.AuctionControlBlock(
+      startHeight,
+      startEpoch,
+      endHeight,
+      endEpoch,
+      rlsdMTRG,
+      rsvdMTRG,
+      rsvdPrice,
+      createTime
+    );
+    const id = auctionCB.ID();
+    console.log('AuctionCB ID: ', id);
+    expect(id).equal('0xd42eb79bae42f1d76d18d8138224b93bd366e345bbb73c3a317878e805dadfef');
+  });
 });
