@@ -31,6 +31,7 @@ export namespace ScriptEngine {
     Delegate = 5,
     Undelegate = 6,
     CandidateUpdate = 7,
+    BucketUpdate = 8,
     DelegateStats = 101,
     BailOut = 102,
     FlushAllStats = 103,
@@ -433,6 +434,33 @@ export namespace ScriptEngine {
       0, // port
       stakingIDStr, // bucket id
       amount,
+      Token.MeterGov,
+      0, // autobid
+      timestamp,
+      nonce
+    );
+    return new ScriptData(ModuleID.Staking, body.encode()).encode();
+  }
+
+  export function getBucketUpdateData(
+    holderAddr: string,
+    bucketID: string,
+    amount: number | string,
+    timestamp = 0,
+    nonce = 0
+  ): Buffer {
+    const body = new StakingBody(
+      StakingOpCode.BucketUpdate,
+      0,
+      holderAddr,
+      holderAddr,
+      '', // name
+      '', // desc
+      '', //
+      '', // ip
+      0, // port
+      bucketID,
+      amount.toString(),
       Token.MeterGov,
       0, // autobid
       timestamp,
