@@ -256,4 +256,29 @@ describe('script engine', () => {
     console.log('AuctionCB ID: ', id);
     expect(id).equal('0xd42eb79bae42f1d76d18d8138224b93bd366e345bbb73c3a317878e805dadfef');
   });
+
+  it('should generate bucket id', () => {
+    const sbody = new ScriptEngine.StakingBody(
+      ScriptEngine.StakingOpCode.Candidate,
+      ScriptEngine.StakingOption.Empty,
+      holderAddr,
+      candidateAddr,
+      candidateName,
+      candidateDesc,
+      candidatePubKey,
+      candidateIP,
+      candidatePort,
+      ScriptEngine.EMPTY_BYTE32,
+      amount,
+      ScriptEngine.Token.MeterGov,
+      timestamp,
+      nonce
+    );
+    const buf = sbody.encode();
+    const body = ScriptEngine.decodeStakingBody(buf) as ScriptEngine.StakingBody;
+    console.log(
+      'BUCKET ID: ',
+      ScriptEngine.getBucketID(body.holderAddr, body.nonce, body.timestamp)
+    );
+  });
 });

@@ -1,4 +1,3 @@
-import * as rlp from 'rlp';
 import { RLP } from './rlp';
 import BigNumber from 'bignumber.js';
 const blake = require('blakejs');
@@ -38,6 +37,35 @@ export namespace ScriptEngine {
     Governing = 10001,
   }
 
+  export const explainStakingOpCode = (opCode: StakingOpCode) => {
+    switch (opCode) {
+      case StakingOpCode.Bound:
+        return 'staking bound';
+      case StakingOpCode.Unbound:
+        return 'staking unbound';
+      case StakingOpCode.Candidate:
+        return 'staking candidate';
+      case StakingOpCode.Uncandidate:
+        return 'staking uncandidate';
+      case StakingOpCode.Delegate:
+        return 'staking delegate';
+      case StakingOpCode.Undelegate:
+        return 'staking undelegate';
+      case StakingOpCode.CandidateUpdate:
+        return 'staking candidate update';
+      case StakingOpCode.BucketUpdate:
+        return 'staking bucket update';
+      case StakingOpCode.DelegateStats:
+        return 'staking delegate stats';
+      case StakingOpCode.BailOut:
+        return 'staking bailout';
+      case StakingOpCode.FlushAllStats:
+        return 'staking clean stats';
+      case StakingOpCode.Governing:
+        return 'staking governing';
+    }
+  };
+
   export enum StakingOption {
     Empty = 0,
     // staking bound
@@ -58,6 +86,23 @@ export namespace ScriptEngine {
     Autobid = 1,
   }
 
+  export const explainAuctionOpCode = (opCode: AuctionOpCode, option: AuctionOption) => {
+    switch (opCode) {
+      case AuctionOpCode.Start:
+        return 'auction start';
+      case AuctionOpCode.End:
+        return 'auction end';
+      case AuctionOpCode.Bid:
+        if (option === AuctionOption.Userbid) {
+          return 'auction userbid';
+        } else if (option === AuctionOption.Autobid) {
+          return 'auction autobid';
+        } else {
+          return 'auction bid';
+        }
+    }
+  };
+
   export enum AccountLockOpCode {
     // account lock
     Add = 1, // only allowed in kblock
@@ -65,6 +110,19 @@ export namespace ScriptEngine {
     Transfer = 3,
     Governing = 4, // only allowed in kblock
   }
+
+  export const explainAccountLockOpCode = (opCode: AccountLockOpCode) => {
+    switch (opCode) {
+      case AccountLockOpCode.Add:
+        return 'account lock add';
+      case AccountLockOpCode.Remove:
+        return 'account lock remove';
+      case AccountLockOpCode.Transfer:
+        return 'account lock transfer';
+      case AccountLockOpCode.Governing:
+        return 'account lock governing';
+    }
+  };
 
   function getRandomInt(max: number): number {
     return Math.floor(Math.random() * Math.floor(max));
@@ -99,6 +157,7 @@ export namespace ScriptEngine {
     return str.startsWith(enginePrefix + dataPrefix);
   }
 
+  // ScriptData encode/decode
   export function encodeScriptData(moduleID: ModuleID, body: StakingBody | AuctionBody): Buffer {
     switch (moduleID) {
       case ModuleID.Staking:
@@ -135,8 +194,9 @@ export namespace ScriptEngine {
     }
     const truncated = Buffer.from(hexStr.substring(sdPrefixStr.length), 'hex');
     return new RLP(ScriptDataProfile).decode(truncated);
-  }
+  } // end of Script Data encode/decode
 
+  // Staking Body decode
   export function decodeStakingBody(input: Buffer | string): StakingBody {
     let buf: Buffer;
     if (typeof input === 'string') {
@@ -147,6 +207,7 @@ export namespace ScriptEngine {
     return new RLP(StakingBodyProfile).decode(buf) as StakingBody;
   }
 
+  // Auction Body decode
   export function decodeAuctionBody(input: Buffer | string): AuctionBody {
     let buf: Buffer;
     if (typeof input === 'string') {
@@ -157,6 +218,7 @@ export namespace ScriptEngine {
     return new RLP(AuctionBodyProfile).decode(buf) as AuctionBody;
   }
 
+  // Account Lock Body decode
   export function decodeAccountLockBody(input: Buffer | string): AccountLockBody {
     let buf: Buffer;
     if (typeof input === 'string') {
@@ -167,6 +229,7 @@ export namespace ScriptEngine {
     return new RLP(AccountLockBodyProfile).decode(buf) as AccountLockBody;
   }
 
+  // Staking Governing Extra decode
   export function decodeStakingGoverningExtra(input: Buffer | string): RewardInfo[] {
     let buf: Buffer;
     if (typeof input === 'string') {
@@ -177,6 +240,7 @@ export namespace ScriptEngine {
     return new RLP(StakingGoverningExtraProfile).decode(buf) as RewardInfo[];
   }
 
+  // Auction Tx decode
   export function getAuctionTxFromAuctionBody(body: AuctionBody): AuctionTx | undefined {
     if (body.opCode === AuctionOpCode.Bid) {
       return new AuctionTx(
@@ -190,6 +254,9 @@ export namespace ScriptEngine {
     return undefined;
   }
 
+  // ------------------------------------------------
+  //                 SCRIPT DATA
+  // ------------------------------------------------
   export const ScriptDataProfile: RLP.Profile = {
     name: 'scriptDataProfile',
     kind: [
@@ -270,6 +337,15 @@ export namespace ScriptEngine {
       { name: 'timestamp', kind: new RLP.NumericKind() },
       { name: 'nonce', kind: new RLP.NumericKind() },
       { name: 'extra', kind: new RLP.BufferKind() },
+    ],
+  };
+
+  export const BucketIDProfile: RLP.Profile = {
+    name: 'bucketID',
+    kind: [
+      { name: 'owner', kind: new RLP.BufferKind() },
+      { name: 'nonce', kind: new RLP.NumericKind() },
+      { name: 'timestamp', kind: new RLP.NumericKind() },
     ],
   };
   export class StakingBody {
@@ -934,7 +1010,7 @@ export namespace ScriptEngine {
     return {
       ...alb,
       fromAddr: '0x' + alb.fromAddr.toString('hex'),
-      toAddr: '0x' + alb.fromAddr.toString('hex'),
+      toAddr: '0x' + alb.toAddr.toString('hex'),
       meterAmount: new BigNumber(alb.meterAmount).toFixed(),
       meterGovAmount: new BigNumber(alb.meterGovAmount).toFixed(),
       memo: alb.memo.toString(),
@@ -949,7 +1025,7 @@ export namespace ScriptEngine {
     meterAmount: number | string,
     meterGovAmount: number | string,
     memo: string
-  ) {
+  ): Buffer {
     const body = new AccountLockBody(
       AccountLockOpCode.Transfer,
       lockEpoch,
@@ -961,5 +1037,15 @@ export namespace ScriptEngine {
       memo
     );
     return new ScriptData(ModuleID.AccountLock, body.encode()).encode();
+  }
+
+  export function getBucketID(owner: Buffer, nonce: number, timestamp: number): string {
+    const bytes = new RLP(BucketIDProfile).encode({
+      owner,
+      nonce,
+      timestamp,
+    });
+    const idBuf = blake.blake2bHex(bytes, null, 32);
+    return '0x' + idBuf.toString('hex');
   }
 }
