@@ -75,6 +75,11 @@ export namespace ScriptEngine {
     FourWeekLock = 4,
   }
 
+  export enum BucketUpdateOption {
+    Add = 0,
+    Sub = 1,
+  }
+
   export enum AuctionOpCode {
     Start = 1,
     End = 2,
@@ -518,7 +523,7 @@ export namespace ScriptEngine {
     return new ScriptData(ModuleID.Staking, body.encode()).encode();
   }
 
-  export function getBucketUpdateData(
+  export function getBucketAddData(
     holderAddr: string,
     bucketID: string,
     amount: number | string,
@@ -527,7 +532,34 @@ export namespace ScriptEngine {
   ): Buffer {
     const body = new StakingBody(
       StakingOpCode.BucketUpdate,
-      0,
+      BucketUpdateOption.Add,
+      holderAddr,
+      holderAddr,
+      '', // name
+      '', // desc
+      '', //
+      '', // ip
+      0, // port
+      bucketID,
+      amount.toString(),
+      Token.MeterGov,
+      0, // autobid
+      timestamp,
+      nonce
+    );
+    return new ScriptData(ModuleID.Staking, body.encode()).encode();
+  }
+
+  export function getBucketSubData(
+    holderAddr: string,
+    bucketID: string,
+    amount: number | string,
+    timestamp = 0,
+    nonce = 0
+  ): Buffer {
+    const body = new StakingBody(
+      StakingOpCode.BucketUpdate,
+      BucketUpdateOption.Sub,
       holderAddr,
       holderAddr,
       '', // name
