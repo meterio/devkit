@@ -145,13 +145,14 @@ export namespace abi {
     export interface Parameter {
       name: string;
       type: string;
+      internalType?: string;
     }
 
     export interface Definition {
       type: 'function';
       name: string;
       constant?: boolean;
-      payable: boolean;
+      payable?: boolean;
       stateMutability: StateMutability;
       inputs: Parameter[];
       outputs: Parameter[];
@@ -253,6 +254,7 @@ export namespace abi {
       name: string;
       type: string;
       indexed: boolean;
+      internalType?: string;
     }
 
     export interface Definition {
