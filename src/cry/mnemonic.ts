@@ -1,4 +1,4 @@
-import { entropyToMnemonic, fromMnemonic, isValidMnemonic } from '@meterio/ethers/utils/hdnode';
+import { entropyToMnemonic, fromMnemonic, isValidMnemonic } from 'ethers/utils/hdnode';
 import { randomBytes } from 'crypto';
 
 export namespace mnemonic {

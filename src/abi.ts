@@ -1,4 +1,4 @@
-import { AbiCoder, formatSignature as _formatSignature } from '@meterio/ethers/utils/abi-coder';
+import { AbiCoder, formatSignature as _formatSignature } from 'ethers/utils/abi-coder';
 import { keccak256 } from './cry/keccak';
 
 class Coder extends AbiCoder {

@@ -1,5 +1,5 @@
-import * as SecretStorage from '@meterio/ethers/utils/secret-storage';
-import { SigningKey } from '@meterio/ethers/utils/signing-key';
+import * as SecretStorage from 'ethers/utils/secret-storage';
+import { SigningKey } from 'ethers/utils/signing-key';
 
 /** to present encrypted private key in Ethereum keystore format. */
 export interface Keystore {

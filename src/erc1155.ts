@@ -146,3 +146,16 @@ export const ERC1155 = {
     isApprovedForAll.signature
   ),
 };
+
+const uri = new abi.Function({
+  inputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+  name: 'uri',
+  outputs: [{ internalType: 'string', name: '', type: 'string' }],
+  stateMutability: 'view',
+  type: 'function',
+});
+
+export const ERC1155Metadata = {
+  uri,
+  interfaceID: XORBatch(uri.signature),
+};
