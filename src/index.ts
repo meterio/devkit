@@ -9,6 +9,7 @@ export * from './certificate';
 export * from './scriptEngine';
 export * from './chain';
 export * from './erc20';
+export * from './erc165';
 export * from './erc721';
 export * from './erc1155';
 
