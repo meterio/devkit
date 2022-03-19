@@ -205,8 +205,11 @@ export namespace ScriptEngine {
   export function decodeStakingBody(input: Buffer | string): StakingBody {
     let buf: Buffer;
     if (typeof input === 'string') {
+      console.log('TYPE 1: ', typeof input);
       buf = Buffer.from(input.replace('0x', ''), 'hex');
     } else {
+      console.log('TYPE 2: ', typeof input);
+      console.log('INPUT: ', input);
       buf = input;
     }
     return new RLP(StakingBodyProfile).decode(buf) as StakingBody;

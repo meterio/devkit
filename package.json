@@ -1,6 +1,6 @@
 {
   "name": "@meterio/devkit",
-  "version": "1.5.1",
+  "version": "1.5.5",
   "description": "Typescript library to aid DApp development on Meter network",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
@@ -55,10 +55,13 @@
   },
   "homepage": "https://github.com/meterio/devkit#readme",
   "devDependencies": {
+    "@types/aes-js": "^3.1.1",
     "@types/chai": "^4.3.0",
     "@types/elliptic": "^6.4.14",
     "@types/mocha": "^9.1.0",
     "@types/node": "^17.0.21",
+    "@types/scrypt-js": "^2.0.1",
+    "@types/uuid": "^8.3.4",
     "@typescript-eslint/eslint-plugin": "^5.15.0",
     "@typescript-eslint/parser": "^5.15.0",
     "chai": "^4.3.6",
@@ -73,12 +76,15 @@
     "typescript": "^4.6.2"
   },
   "dependencies": {
-    "ethers": "^4.0.44",
+    "aes-js": "^3.1.2",
     "bignumber.js": "^9.0.2",
-    "blakejs": "^1.1.1",
+    "blakejs": "^1.1.2",
     "elliptic": "^6.5.4",
+    "ethers": "^4.0.44",
     "fast-json-stable-stringify": "^2.1.0",
     "js-sha3": "^0.8.0",
-    "rlp": "^3.0.0"
+    "rlp": "^3.0.0",
+    "scrypt-js": "^2.0.4",
+    "uuid": "^8.3.2"
   }
 }

@@ -10,7 +10,9 @@ export class RLP {
    */
   public encode(data: any): Buffer {
     const packed = pack(data, this.profile, '');
-    return (rlp.encode(packed) as any) as Buffer;
+    const encoded = rlp.encode(packed);
+    const hex = Buffer.from(encoded).toString('hex');
+    return Buffer.from(hex, 'hex');
   }
 
   /**
@@ -263,6 +265,11 @@ function unpack(packed: any, profile: RLP.Profile, ctx: string): any {
   ctx = ctx ? `${ctx}.${profile.name}` : profile.name;
   const { kind } = profile;
   if (kind instanceof RLP.ScalarKind) {
+    if (packed instanceof Uint8Array) {
+      const packedBuf = Buffer.from(packed);
+      assert(Buffer.isBuffer(packedBuf), ctx, 'expected Buffer');
+      return kind.buffer(packedBuf, ctx).decode();
+    }
     assert(Buffer.isBuffer(packed), ctx, 'expected Buffer');
     return kind.buffer(packed, ctx).decode();
   }

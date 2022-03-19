@@ -1,9 +1,9 @@
-import { AbiCoder, formatSignature as _formatSignature } from 'ethers/utils/abi-coder';
+import { formatSignature as _formatSignature, AbiCoder } from 'ethers/utils/abi-coder';
 import { keccak256 } from './cry/keccak';
 
 class Coder extends AbiCoder {
   constructor() {
-    super((type, value) => {
+    super((type: string, value: any) => {
       if (
         (type.match(/^u?int/) && !Array.isArray(value) && typeof value !== 'object') ||
         value._ethersType === 'BigNumber'
