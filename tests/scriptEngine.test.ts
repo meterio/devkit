@@ -1,8 +1,6 @@
 import { expect } from 'chai';
-import { Script } from 'vm';
 import BigNumber from 'bignumber.js';
 import { ScriptEngine, RLP } from '../src';
-import { time } from 'console';
 const holderAddr = '0x0205c2D862cA051010698b69b54278cbAf945C0b'.toLowerCase();
 const candidateAddr = '0x8a88c59bf15451f9deb1d62f7734fece2002668e'.toLowerCase();
 const candidatePubKey =
@@ -54,7 +52,7 @@ describe('script engine', () => {
   });
 
   it('candidate', () => {
-    const scriptDataBuffer = ScriptEngine.getCandidateData(
+    const scriptData = ScriptEngine.getCandidateData(
       candidateAddr,
       candidateName,
       candidateDesc,
@@ -67,23 +65,21 @@ describe('script engine', () => {
       nonce,
       autobid
     );
-    const scriptData = '0x' + scriptDataBuffer.toString('hex');
     const decoded = ScriptEngine.decodeScriptData(scriptData);
     const body = ScriptEngine.decodeStakingBody(decoded.payload);
-    expect(candidateAddr).equal('0x' + body.holderAddr.toString('hex'));
-    expect(candidateAddr).equal('0x' + body.candidateAddr.toString('hex'));
+    expect(candidateAddr).equal(body.holderAddr);
+    expect(candidateAddr).equal(body.candidateAddr);
   });
 
   it('uncandidate', () => {
-    const scriptDataBuffer = ScriptEngine.getUncandidateData(candidateAddr, timestamp, nonce);
-    const scriptData = '0x' + scriptDataBuffer.toString('hex');
+    const scriptData = ScriptEngine.getUncandidateData(candidateAddr, timestamp, nonce);
     const decoded = ScriptEngine.decodeScriptData(scriptData);
     const body = ScriptEngine.decodeStakingBody(decoded.payload);
-    expect(candidateAddr).equal('0x' + body.candidateAddr.toString('hex'));
+    expect(candidateAddr).equal(body.candidateAddr);
   });
 
   it('delegate', () => {
-    const scriptDataBuffer = ScriptEngine.getDelegateData(
+    const scriptData = ScriptEngine.getDelegateData(
       holderAddr,
       candidateAddr,
       bucketID,
@@ -91,29 +87,27 @@ describe('script engine', () => {
       timestamp,
       nonce
     );
-    const scriptData = '0x' + scriptDataBuffer.toString('hex');
     const decoded = ScriptEngine.decodeScriptData(scriptData);
     const body = ScriptEngine.decodeStakingBody(decoded.payload);
-    expect(holderAddr).equal('0x' + body.holderAddr.toString('hex'));
-    expect(candidateAddr).equal('0x' + body.candidateAddr.toString('hex'));
+    expect(holderAddr).equal(body.holderAddr);
+    expect(candidateAddr).equal(body.candidateAddr);
   });
 
   it('undelegate', () => {
-    const scriptDataBuffer = ScriptEngine.getUndelegateData(
+    const scriptData = ScriptEngine.getUndelegateData(
       holderAddr,
       bucketID,
       amount,
       timestamp,
       nonce
     );
-    const scriptData = '0x' + scriptDataBuffer.toString('hex');
     const decoded = ScriptEngine.decodeScriptData(scriptData);
     const body = ScriptEngine.decodeStakingBody(decoded.payload);
-    expect(holderAddr).equal('0x' + body.holderAddr.toString('hex'));
+    expect(holderAddr).equal(body.holderAddr);
   });
 
   it('bound', () => {
-    const scriptDataBuffer = ScriptEngine.getBoundData(
+    const scriptData = ScriptEngine.getBoundData(
       ScriptEngine.StakingOption.OneWeekLock,
       holderAddr,
       candidateAddr,
@@ -121,38 +115,29 @@ describe('script engine', () => {
       timestamp,
       nonce
     );
-    const scriptData = '0x' + scriptDataBuffer.toString('hex');
     const decoded = ScriptEngine.decodeScriptData(scriptData);
     const body = ScriptEngine.decodeStakingBody(decoded.payload);
-    expect(holderAddr).equal('0x' + body.holderAddr.toString('hex'));
-    expect(candidateAddr).equal('0x' + body.candidateAddr.toString('hex'));
+    expect(holderAddr).equal(body.holderAddr);
+    expect(candidateAddr).equal(body.candidateAddr);
   });
 
   it('unbound', () => {
-    const scriptDataBuffer = ScriptEngine.getUnboundData(
-      holderAddr,
-      bucketID,
-      amount,
-      timestamp,
-      nonce
-    );
-    const scriptData = '0x' + scriptDataBuffer.toString('hex');
+    const scriptData = ScriptEngine.getUnboundData(holderAddr, bucketID, amount, timestamp, nonce);
     const decoded = ScriptEngine.decodeScriptData(scriptData);
     const body = ScriptEngine.decodeStakingBody(decoded.payload);
-    expect(holderAddr).equal('0x' + body.holderAddr.toString('hex'));
+    expect(holderAddr).equal(body.holderAddr);
   });
 
   it('bid', () => {
-    const scriptDataBuffer = ScriptEngine.getBidData(holderAddr, amount, timestamp, nonce);
-    const scriptData = '0x' + scriptDataBuffer.toString('hex');
+    const scriptData = ScriptEngine.getBidData(holderAddr, amount, timestamp, nonce);
     const decoded = ScriptEngine.decodeScriptData(scriptData);
     const body = ScriptEngine.decodeAuctionBody(decoded.payload);
-    expect(holderAddr).equal('0x' + body.bidder.toString('hex'));
+    expect(holderAddr).equal(body.bidder);
     expect(new BigNumber(amount).toFixed()).equal(new BigNumber(body.amount).toFixed());
   });
 
   it('candidateUpdate', () => {
-    const scriptDataBuffer = ScriptEngine.getCandidateUpdateData(
+    const scriptData = ScriptEngine.getCandidateUpdateData(
       candidateAddr,
       candidateName,
       candidateDesc,
@@ -163,22 +148,20 @@ describe('script engine', () => {
       timestamp,
       nonce
     );
-    const scriptData = '0x' + scriptDataBuffer.toString('hex');
     const decoded = ScriptEngine.decodeScriptData(scriptData);
     const body = ScriptEngine.decodeStakingBody(decoded.payload);
-    expect(candidateAddr).equal('0x' + body.holderAddr.toString('hex'));
+    expect(candidateAddr).equal(body.holderAddr);
   });
 
   it('bailOut', () => {
-    const scriptDataBuffer = ScriptEngine.getBailOutData(holderAddr, timestamp, nonce);
-    const scriptData = '0x' + scriptDataBuffer.toString('hex');
+    const scriptData = ScriptEngine.getBailOutData(holderAddr, timestamp, nonce);
     const decoded = ScriptEngine.decodeScriptData(scriptData);
     const body = ScriptEngine.decodeStakingBody(decoded.payload);
-    expect(holderAddr).equal('0x' + body.holderAddr.toString('hex'));
+    expect(holderAddr).equal(body.holderAddr);
   });
 
   it('lockedTransfer', () => {
-    const scriptDataBuffer = ScriptEngine.getLockedTransferData(
+    const scriptData = ScriptEngine.getLockedTransferData(
       lockEpoch,
       releaseEpoch,
       holderAddr,
@@ -187,7 +170,6 @@ describe('script engine', () => {
       mtrgAmount,
       'memo'
     );
-    const scriptData = '0x' + scriptDataBuffer.toString('hex');
     expect(scriptData).equal(
       '0xffffffffdeadbeeff84cc4808203eab845f8430380806481c8940205c2d862ca051010698b69b54278cbaf945c0b948a88c59bf15451f9deb1d62f7734fece2002668e8901158e460913d00000830186a0846d656d6f'
     );
@@ -280,5 +262,12 @@ describe('script engine', () => {
       'BUCKET ID: ',
       ScriptEngine.getBucketID(body.holderAddr, body.nonce, body.timestamp)
     );
+  });
+
+  it('should decode ', () => {
+    const data =
+      '0xdeadbeeff903d7c4808203e8b903cff903cc822711823680809400000000000000000000000000000000000000009400000000000000000000000000000000000000008080808080a00000000000000000000000000000000000000000000000000000000000000000883c0e4a3aebc937908080846231453b88d120415cac18562cb90359f90356de94a930066c355bd4de0cbe0715c1d47419ef8ba16888017f21601f450174de94927495f329ab083e6cff350d6e9d8652d76f90f788148329e8544595a1de94b93fef49ec53dc8e1a8b1fae6571cb82e91250578801e723659496f8eade9448f450d5f51b5340f8d7ebd9a8417625ea5df531880411e71f0426b589de9447e6a9a2f46db41b5a49149e71ff4a1ab500dad58801f9a64db9e91120dd94f2c1edc8a90a8c989773306a7e04cab0ab24b47d8785ce1ded986b19dd94a503d0931da0e831970d2592658c69f7ee94767f87048f5b74d69711de94be790a97479831b5dfc7132e52f9810990417e37880466ab849028efcfdd9494b1e28661d7cbbb834103f386f200efe81aa907870757e49e420663dd9477caa77ddedf1d5cabca2c60ea60b46afa6f32c387048f5b74d69711dd94c95320a56b4a2f2674b3fa77caf2780ee2f1d21f87193c2c05974ec6de94ad2b2f10edeac77525323a914e584aa4bb56be9588038256506fdb468ede943a87eae486c641820b13a476e67005a455ae7c3488048cd0c1c7b32b5ede94f3c69175cb24ff525024e55587f20268b0523fb58801818874fd739a8ddd94fa289a0f68f21b363574a8b4543e4b6237118a2a87263b5338e60445dd94b9acf5bbbbcb0804f5cc5a4e41e34e4532a0d460870487d49bc0bdbbde94870d06641d73f39196b1efb3bc4abcc4a6650797880147296c15539a71de94b2b9e6de39058896190798fa0354b7cee6c23a0e8801e7236ec95d4b91dd942c2b5dfbf282c2550a7eb872a980df31a9227b57870774db56803ee8de947db6ac6fa3c8aa2c6fb9bdcd4800e8baacdd2ee8880497c830de1f7dc2dd94cb0326a4abc6911bbb4e665e1e37ef44f4ab9b4c870757df6dd87e22dd94d6a6d3ea931a6d0788b8a4d637c64a7ae03d2bea870757ac0e908605de94f6959e47b94c82b93867fc876b4c99f37e49689788017b5f09c9db5d1fdd94be7acad0aa02ed06c7f3c27c6172b36e93d706628707d43093193d59dd94ebb86150862250654e8ff50401e30503d9ae272e87084307b63c81cedd94243182372d45e5b6986fa4f6586e0eb17da651c587173d2902356889de94d7c2edb33b8509e1e7cbab03e43e38835cf269ee8805c16a34b7310f07dd94c3d8ec89f38d81f3df56d3e6be30081af0410a04870757f4b455f993';
+    const decoded = ScriptEngine.decodeScriptData(data);
+    console.log('Body: ', decoded.body);
   });
 });

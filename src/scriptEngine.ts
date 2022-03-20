@@ -1,11 +1,13 @@
 import { RLP } from './rlp';
 import BigNumber from 'bignumber.js';
+import { Module } from 'module';
+import { Script } from 'vm';
 const blake = require('blakejs');
 
 export namespace ScriptEngine {
-  export const SCRIPT_ENGINE_PREFIX = Buffer.from('ffffffff', 'hex');
+  export const SCRIPT_ENGINE_PREFIX = 'ffffffff';
   export const SCRIPT_ENGINE_VERSION = 0;
-  export const SCRIPT_DATA_PREFIX = Buffer.from('deadbeef', 'hex');
+  export const SCRIPT_DATA_PREFIX = 'deadbeef';
   export const STAKING_VERSION = 0;
   export const AUCTION_VERSION = 0;
   export const EMPTY_ADDRESS = '0x0000000000000000000000000000000000000000';
@@ -156,14 +158,14 @@ export namespace ScriptEngine {
     if (hexStr.startsWith('0x')) {
       str = hexStr.replace('0x', '');
     }
-    const enginePrefix = SCRIPT_ENGINE_PREFIX.toString('hex');
-    const dataPrefix = SCRIPT_DATA_PREFIX.toString('hex');
+    const enginePrefix = SCRIPT_ENGINE_PREFIX;
+    const dataPrefix = SCRIPT_DATA_PREFIX;
 
     return str.startsWith(enginePrefix + dataPrefix);
   }
 
   // ScriptData encode/decode
-  export function encodeScriptData(moduleID: ModuleID, body: StakingBody | AuctionBody): Buffer {
+  export function encodeScriptData(moduleID: ModuleID, body: StakingBody | AuctionBody): string {
     switch (moduleID) {
       case ModuleID.Staking:
         if (!(body instanceof StakingBody)) {
@@ -180,7 +182,7 @@ export namespace ScriptEngine {
     }
   }
 
-  export function decodeScriptData(input: Buffer | string): ScriptData {
+  export function decodeScriptData(input: Buffer | string): DecodedScriptData {
     let buf: Buffer;
     if (typeof input === 'string') {
       buf = Buffer.from(input.replace('0x', ''), 'hex');
@@ -188,8 +190,8 @@ export namespace ScriptEngine {
       buf = input;
     }
     let hexStr = buf.toString('hex');
-    const sePrefixStr = SCRIPT_ENGINE_PREFIX.toString('hex');
-    const sdPrefixStr = SCRIPT_DATA_PREFIX.toString('hex');
+    const sePrefixStr = SCRIPT_ENGINE_PREFIX;
+    const sdPrefixStr = SCRIPT_DATA_PREFIX;
     if (hexStr.startsWith(sePrefixStr)) {
       hexStr = hexStr.substring(sePrefixStr.length);
     }
@@ -198,18 +200,27 @@ export namespace ScriptEngine {
       throw new DecodeError('could not decode script data: 0x' + buf.toString('hex'));
     }
     const truncated = Buffer.from(hexStr.substring(sdPrefixStr.length), 'hex');
-    return new RLP(ScriptDataProfile).decode(truncated);
+    const sd = new RLP(ScriptDataProfile).decode(truncated);
+    switch (sd.header.modId) {
+      case ModuleID.AccountLock:
+        const alb = decodeAccountLockBody(sd.payload);
+        return new DecodedScriptData(sd, alb);
+      case ModuleID.Auction:
+        const ab = decodeAuctionBody(sd.payload);
+        return new DecodedScriptData(sd, ab);
+      case ModuleID.Staking:
+        const sb = decodeStakingBody(sd.payload);
+        return new DecodedScriptData(sd, sb);
+    }
+    return new DecodedScriptData(sd);
   } // end of Script Data encode/decode
 
   // Staking Body decode
   export function decodeStakingBody(input: Buffer | string): StakingBody {
     let buf: Buffer;
     if (typeof input === 'string') {
-      console.log('TYPE 1: ', typeof input);
       buf = Buffer.from(input.replace('0x', ''), 'hex');
     } else {
-      console.log('TYPE 2: ', typeof input);
-      console.log('INPUT: ', input);
       buf = input;
     }
     return new RLP(StakingBodyProfile).decode(buf) as StakingBody;
@@ -251,13 +262,7 @@ export namespace ScriptEngine {
   // Auction Tx decode
   export function getAuctionTxFromAuctionBody(body: AuctionBody): AuctionTx | undefined {
     if (body.opCode === AuctionOpCode.Bid) {
-      return new AuctionTx(
-        '0x' + body.bidder.toString('hex'),
-        body.amount,
-        body.option,
-        body.timestamp,
-        body.nonce
-      );
+      return new AuctionTx(body.bidder, body.amount, body.option, body.timestamp, body.nonce);
     }
     return undefined;
   }
@@ -275,7 +280,7 @@ export namespace ScriptEngine {
           { name: 'modId', kind: new RLP.NumericKind() },
         ],
       },
-      { name: 'payload', kind: new RLP.BufferKind() },
+      { name: 'payload', kind: new RLP.HexKind() },
     ],
   };
   export class ScriptDataHeader {
@@ -286,21 +291,35 @@ export namespace ScriptEngine {
       this.modId = modId;
     }
   }
+  export class DecodedScriptData {
+    public header: { version: number; modId: number };
+    public payload: string;
+    public body: AuctionBody | StakingBody | AccountLockBody | undefined;
+    constructor(
+      data: ScriptData,
+      body: AuctionBody | StakingBody | AccountLockBody | undefined = undefined
+    ) {
+      this.header = { ...data.header };
+      this.payload = data.payload;
+      this.body = body;
+    }
+  }
   export class ScriptData {
     public header: ScriptDataHeader;
-    public payload: Buffer;
+    public payload: string;
 
-    constructor(modId: number, payload: Buffer) {
+    constructor(modId: number, payload: string) {
       this.header = new ScriptDataHeader(SCRIPT_ENGINE_VERSION, modId);
       this.payload = payload;
     }
 
-    encode(): Buffer {
-      return Buffer.concat([
-        SCRIPT_ENGINE_PREFIX,
-        SCRIPT_DATA_PREFIX,
-        new RLP(ScriptDataProfile).encode(this),
-      ]);
+    encode(): string {
+      return (
+        '0x' +
+        SCRIPT_ENGINE_PREFIX +
+        SCRIPT_DATA_PREFIX +
+        new RLP(ScriptDataProfile).encode(this).toString('hex')
+      );
     }
   }
 
@@ -311,15 +330,15 @@ export namespace ScriptEngine {
     name: 'stakingGoverningExtraProfile',
     kind: {
       item: [
-        { name: 'address', kind: new RLP.BufferKind() },
+        { name: 'address', kind: new RLP.HexKind() },
         { name: 'amount', kind: new RLP.NumericKind() },
       ],
     },
   };
   export class RewardInfo {
-    public address: Buffer;
+    public address: string;
     public amount: string;
-    constructor(address: Buffer, amount: string) {
+    constructor(address: string, amount: string) {
       this.address = address;
       this.amount = amount;
     }
@@ -331,27 +350,27 @@ export namespace ScriptEngine {
       { name: 'opCode', kind: new RLP.NumericKind() },
       { name: 'version', kind: new RLP.NumericKind() },
       { name: 'option', kind: new RLP.NumericKind() },
-      { name: 'holderAddr', kind: new RLP.BufferKind() },
-      { name: 'candidateAddr', kind: new RLP.BufferKind() },
-      { name: 'candidateName', kind: new RLP.BufferKind() },
-      { name: 'candidateDescription', kind: new RLP.BufferKind() },
-      { name: 'candidatePubKey', kind: new RLP.BufferKind() },
-      { name: 'candidateIP', kind: new RLP.BufferKind() },
+      { name: 'holderAddr', kind: new RLP.HexKind() },
+      { name: 'candidateAddr', kind: new RLP.HexKind() },
+      { name: 'candidateName', kind: new RLP.TextKind() },
+      { name: 'candidateDescription', kind: new RLP.TextKind() },
+      { name: 'candidatePubKey', kind: new RLP.TextKind() },
+      { name: 'candidateIP', kind: new RLP.TextKind() },
       { name: 'candidatePort', kind: new RLP.NumericKind() },
-      { name: 'bucketID', kind: new RLP.BufferKind() },
+      { name: 'bucketID', kind: new RLP.HexKind() },
       { name: 'amount', kind: new RLP.NumericKind() },
       { name: 'token', kind: new RLP.NumericKind() },
       { name: 'autobid', kind: new RLP.NumericKind() },
       { name: 'timestamp', kind: new RLP.NumericKind() },
       { name: 'nonce', kind: new RLP.NumericKind() },
-      { name: 'extra', kind: new RLP.BufferKind() },
+      { name: 'extra', kind: new RLP.HexKind() },
     ],
   };
 
   export const BucketIDProfile: RLP.Profile = {
     name: 'bucketID',
     kind: [
-      { name: 'owner', kind: new RLP.BufferKind() },
+      { name: 'owner', kind: new RLP.HexKind() },
       { name: 'nonce', kind: new RLP.NumericKind() },
       { name: 'timestamp', kind: new RLP.NumericKind() },
     ],
@@ -360,20 +379,20 @@ export namespace ScriptEngine {
     public opCode: StakingOpCode;
     public version: number;
     public option: number;
-    public holderAddr: Buffer;
-    public candidateAddr: Buffer;
-    public candidateName: Buffer;
-    public candidateDescription: Buffer;
-    public candidatePubKey: Buffer;
-    public candidateIP: Buffer;
+    public holderAddr: string;
+    public candidateAddr: string;
+    public candidateName: string;
+    public candidateDescription: string;
+    public candidatePubKey: string;
+    public candidateIP: string;
     public candidatePort: number;
-    public bucketID: Buffer;
+    public bucketID: string;
     public amount: string;
     public token: Token;
     public autobid: number;
     public timestamp: number;
     public nonce: number;
-    public extra: Buffer;
+    public extra: string;
 
     constructor(
       op: StakingOpCode,
@@ -417,24 +436,14 @@ export namespace ScriptEngine {
         bucketIDStr = EMPTY_BYTE32;
       }
 
-      // remove 0x prefix
-      if (holderAddrStr.startsWith('0x')) {
-        holderAddrStr = holderAddrStr.replace('0x', '');
-      }
-      if (candidateAddrStr.startsWith('0x')) {
-        candidateAddrStr = candidateAddrStr.replace('0x', '');
-      }
-      if (bucketIDStr.toString().startsWith('0x')) {
-        bucketIDStr = bucketIDStr.replace('0x', '');
-      }
-      this.holderAddr = Buffer.from(holderAddrStr, 'hex');
-      this.candidateAddr = Buffer.from(candidateAddrStr, 'hex');
-      this.candidateName = Buffer.from(candidateName);
-      this.candidateDescription = Buffer.from(candidateDescription);
-      this.candidatePubKey = Buffer.from(candidatePubKey);
-      this.candidateIP = Buffer.from(candidateIP);
+      this.holderAddr = holderAddr;
+      this.candidateAddr = candidateAddr;
+      this.candidateName = candidateName;
+      this.candidateDescription = candidateDescription;
+      this.candidatePubKey = candidatePubKey;
+      this.candidateIP = candidateIP;
       this.candidatePort = candidatePort;
-      this.bucketID = Buffer.from(bucketIDStr, 'hex');
+      this.bucketID = bucketID;
       this.amount = amount.toString();
       this.token = token;
       if (timestamp != 0) {
@@ -447,25 +456,22 @@ export namespace ScriptEngine {
       } else {
         this.nonce = getRandomInt64();
       }
-      this.extra = Buffer.from('', 'hex');
+      this.extra = '';
     }
 
-    public encode(): Buffer {
-      return new RLP(StakingBodyProfile).encode(this);
+    public encode(): string {
+      return '0x' + new RLP(StakingBodyProfile).encode(this).toString('hex');
     }
   }
 
+  /**
+   * @deprecated
+   * @param sb
+   * @returns
+   */
   export function jsonFromStakingBody(sb: StakingBody): any {
     return {
       ...sb,
-      bucketID: '0x' + sb.bucketID.toString('hex'),
-      holderAddr: '0x' + sb.holderAddr.toString('hex'),
-      candidateAddr: '0x' + sb.candidateAddr.toString('hex'),
-      candidateDescription: sb.candidateDescription.toString(),
-      candidateIP: sb.candidateIP.toString(),
-      candidateName: sb.candidateName.toString(),
-      candidatePubKey: sb.candidatePubKey.toString(),
-      extra: sb.extra.toString('hex'),
       amount: new BigNumber(sb.amount).toFixed(),
     };
   }
@@ -478,7 +484,7 @@ export namespace ScriptEngine {
     timestamp = 0,
     nonce = 0,
     autobid = 0
-  ): Buffer {
+  ): string {
     const body = new StakingBody(
       StakingOpCode.Bound,
       option,
@@ -505,7 +511,7 @@ export namespace ScriptEngine {
     amount: number | string,
     timestamp = 0,
     nonce = 0
-  ): Buffer {
+  ): string {
     const body = new StakingBody(
       StakingOpCode.Unbound,
       StakingOption.Empty,
@@ -532,7 +538,7 @@ export namespace ScriptEngine {
     amount: number | string,
     timestamp = 0,
     nonce = 0
-  ): Buffer {
+  ): string {
     const body = new StakingBody(
       StakingOpCode.BucketUpdate,
       BucketUpdateOption.Add,
@@ -559,7 +565,7 @@ export namespace ScriptEngine {
     amount: number | string,
     timestamp = 0,
     nonce = 0
-  ): Buffer {
+  ): string {
     const body = new StakingBody(
       StakingOpCode.BucketUpdate,
       BucketUpdateOption.Sub,
@@ -593,7 +599,7 @@ export namespace ScriptEngine {
     timestamp = 0,
     nonce = 0,
     autobid = 0
-  ): Buffer {
+  ): string {
     let option = 0;
     if (commission >= 100 && commission <= 1000) {
       option = commission * 1e5;
@@ -619,7 +625,7 @@ export namespace ScriptEngine {
     // return body.encode();
   }
 
-  export function getUncandidateData(candidateAddr: string, timestamp = 0, nonce = 0): Buffer {
+  export function getUncandidateData(candidateAddr: string, timestamp = 0, nonce = 0): string {
     const body = new StakingBody(
       StakingOpCode.Uncandidate,
       StakingOption.Empty,
@@ -648,7 +654,7 @@ export namespace ScriptEngine {
     timestamp = 0,
     nonce = 0,
     autobid = 0
-  ): Buffer {
+  ): string {
     const body = new StakingBody(
       StakingOpCode.Delegate,
       StakingOption.Empty,
@@ -676,7 +682,7 @@ export namespace ScriptEngine {
     amount: number | string,
     timestamp = 0,
     nonce = 0
-  ): Buffer {
+  ): string {
     const body = new StakingBody(
       StakingOpCode.Undelegate,
       StakingOption.Empty,
@@ -709,7 +715,7 @@ export namespace ScriptEngine {
     timestamp = 0,
     nonce = 0,
     autobid = 0
-  ): Buffer {
+  ): string {
     let option = 0;
     if (commission >= 100 && commission <= 1000) {
       option = commission * 1e5;
@@ -735,7 +741,7 @@ export namespace ScriptEngine {
     // return body.encode();
   }
 
-  export function getBailOutData(holderAddr: string, timestamp = 0, nonce = 0): Buffer {
+  export function getBailOutData(holderAddr: string, timestamp = 0, nonce = 0): string {
     const body = new StakingBody(
       StakingOpCode.BailOut,
       StakingOption.Empty,
@@ -859,8 +865,8 @@ export namespace ScriptEngine {
       { name: 'endHeight', kind: new RLP.NumericKind() },
       { name: 'endEpoch', kind: new RLP.NumericKind() },
       { name: 'sequence', kind: new RLP.NumericKind() },
-      { name: 'auctionID', kind: new RLP.BufferKind() },
-      { name: 'bidder', kind: new RLP.BufferKind() },
+      { name: 'auctionID', kind: new RLP.HexKind() },
+      { name: 'bidder', kind: new RLP.HexKind() },
       { name: 'amount', kind: new RLP.NumericKind() },
       { name: 'reserveAmount', kind: new RLP.NumericKind() },
       { name: 'token', kind: new RLP.NumericKind() },
@@ -878,8 +884,8 @@ export namespace ScriptEngine {
     public endHeight: number;
     public endEpoch: number;
     public sequence: number;
-    public auctionID: Buffer;
-    public bidder: Buffer;
+    public auctionID: string;
+    public bidder: string;
     public amount: string;
     public reserveAmount: string;
     public token: Token;
@@ -905,13 +911,6 @@ export namespace ScriptEngine {
         auctionIDStr = EMPTY_BYTE32;
       }
 
-      if (bidderStr.startsWith('0x')) {
-        bidderStr = bidderStr.replace('0x', '');
-      }
-      if (auctionIDStr.startsWith('0x')) {
-        auctionIDStr = auctionIDStr.replace('0x', '');
-      }
-
       this.opCode = opCode;
       this.version = AUCTION_VERSION;
       this.option = option;
@@ -920,8 +919,8 @@ export namespace ScriptEngine {
       this.endHeight = 0;
       this.endEpoch = 0;
       this.sequence = 0;
-      this.auctionID = Buffer.from(auctionIDStr, 'hex');
-      this.bidder = Buffer.from(bidderStr, 'hex');
+      this.auctionID = auctionID;
+      this.bidder = bidder;
       this.amount = amount.toString();
       this.reserveAmount = '0';
       this.token = Token.Meter;
@@ -937,16 +936,19 @@ export namespace ScriptEngine {
       }
     }
 
-    public encode(): Buffer {
-      return new RLP(AuctionBodyProfile).encode(this);
+    public encode(): string {
+      return '0x' + new RLP(AuctionBodyProfile).encode(this).toString('hex');
     }
   }
 
+  /**
+   * @deprecated
+   * @param ab
+   * @returns
+   */
   export function jsonFromAuctionBody(ab: AuctionBody): object {
     return {
       ...ab,
-      auctionID: '0x' + ab.auctionID.toString('hex'),
-      bidder: '0x' + ab.bidder.toString('hex'),
       amount: new BigNumber(ab.amount).toFixed(),
       reserveAmount: new BigNumber(ab.reserveAmount).toFixed(),
     };
@@ -957,7 +959,7 @@ export namespace ScriptEngine {
     amount: number | string,
     timestamp = 0,
     nonce = 0
-  ): Buffer {
+  ): string {
     const body = new AuctionBody(
       AuctionOpCode.Bid,
       AuctionOption.Userbid,
@@ -981,11 +983,11 @@ export namespace ScriptEngine {
       { name: 'option', kind: new RLP.NumericKind() },
       { name: 'lockEpoch', kind: new RLP.NumericKind() },
       { name: 'releaseEpoch', kind: new RLP.NumericKind() },
-      { name: 'fromAddr', kind: new RLP.BufferKind() },
-      { name: 'toAddr', kind: new RLP.BufferKind() },
+      { name: 'fromAddr', kind: new RLP.HexKind() },
+      { name: 'toAddr', kind: new RLP.HexKind() },
       { name: 'meterAmount', kind: new RLP.NumericKind() },
       { name: 'meterGovAmount', kind: new RLP.NumericKind() },
-      { name: 'memo', kind: new RLP.BufferKind() },
+      { name: 'memo', kind: new RLP.TextKind() },
     ],
   };
   export class AccountLockBody {
@@ -994,11 +996,11 @@ export namespace ScriptEngine {
     public option: number;
     public lockEpoch: number;
     public releaseEpoch: number;
-    public fromAddr: Buffer;
-    public toAddr: Buffer;
+    public fromAddr: string;
+    public toAddr: string;
     public meterAmount: string;
     public meterGovAmount: string;
-    public memo: Buffer;
+    public memo: string;
 
     constructor(
       op: AccountLockOpCode,
@@ -1021,34 +1023,30 @@ export namespace ScriptEngine {
       if (toAddrStr === '' || toAddrStr === '0x') {
         toAddrStr = EMPTY_ADDRESS;
       }
-      if (fromAddrStr.startsWith('0x')) {
-        fromAddrStr = fromAddrStr.replace('0x', '');
-      }
-      if (toAddrStr.startsWith('0x')) {
-        toAddrStr = toAddrStr.replace('0x', '');
-      }
-      this.fromAddr = Buffer.from(fromAddrStr, 'hex');
-      this.toAddr = Buffer.from(toAddrStr, 'hex');
+      this.fromAddr = fromAddr;
+      this.toAddr = toAddr;
       this.lockEpoch = lockEpoch;
       this.releaseEpoch = releaseEpoch;
       this.meterAmount = meterAmount.toString();
       this.meterGovAmount = meterGovAmount.toString();
-      this.memo = Buffer.from(memo, 'utf-8');
+      this.memo = memo;
     }
 
-    public encode(): Buffer {
-      return new RLP(AccountLockBodyProfile).encode(this);
+    public encode(): string {
+      return '0x' + new RLP(AccountLockBodyProfile).encode(this).toString('hex');
     }
   }
 
+  /**
+   * @deprecated
+   * @param alb
+   * @returns
+   */
   export function jsonFromAccountLockBody(alb: AccountLockBody): object {
     return {
       ...alb,
-      fromAddr: '0x' + alb.fromAddr.toString('hex'),
-      toAddr: '0x' + alb.toAddr.toString('hex'),
       meterAmount: new BigNumber(alb.meterAmount).toFixed(),
       meterGovAmount: new BigNumber(alb.meterGovAmount).toFixed(),
-      memo: alb.memo.toString(),
     };
   }
 
@@ -1060,7 +1058,7 @@ export namespace ScriptEngine {
     meterAmount: number | string,
     meterGovAmount: number | string,
     memo: string
-  ): Buffer {
+  ): string {
     const body = new AccountLockBody(
       AccountLockOpCode.Transfer,
       lockEpoch,
@@ -1074,7 +1072,7 @@ export namespace ScriptEngine {
     return new ScriptData(ModuleID.AccountLock, body.encode()).encode();
   }
 
-  export function getBucketID(owner: Buffer, nonce: number, timestamp: number): string {
+  export function getBucketID(owner: string, nonce: number, timestamp: number): string {
     const bytes = new RLP(BucketIDProfile).encode({
       owner,
       nonce,

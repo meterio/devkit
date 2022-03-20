@@ -52,6 +52,54 @@ export namespace RLP {
       };
     }
   }
+  export class HexKind extends ScalarKind {
+    public data(data: string, ctx: string) {
+      assert(typeof data === 'string', ctx, 'expected string: ');
+      assert(
+        isHexString(data) || isHexString2(data) || data === '',
+        ctx,
+        'expected hex string: ' + data
+      );
+      const buf =
+        data === ''
+          ? Buffer.from('')
+          : isHexString2(data)
+          ? Buffer.from(data, 'hex')
+          : Buffer.from(data.slice(2), 'hex');
+      return {
+        encode() {
+          return buf;
+        },
+      };
+    }
+
+    public buffer(buf: Buffer, ctx: string) {
+      return {
+        decode(): String {
+          return '0x' + buf.toString('hex');
+        },
+      };
+    }
+  }
+  export class TextKind extends ScalarKind {
+    public data(data: string, ctx: string) {
+      assert(typeof data === 'string', ctx, 'expected string: ');
+      const buf = Buffer.from(data);
+      return {
+        encode() {
+          return buf;
+        },
+      };
+    }
+
+    public buffer(buf: Buffer, ctx: string) {
+      return {
+        decode(): String {
+          return buf.toString();
+        },
+      };
+    }
+  }
 
   /** a scalar kind to presents number */
   export class NumericKind extends ScalarKind {
@@ -301,6 +349,10 @@ function assert(cond: boolean, ctx: string, msg: string) {
 
 function isHexString(str: string) {
   return /^0x[0-9a-f]*$/i.test(str);
+}
+
+function isHexString2(str: string) {
+  return /^[0-9a-f]*$/i.test(str);
 }
 
 function isDecString(str: string) {
