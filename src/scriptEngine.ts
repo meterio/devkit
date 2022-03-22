@@ -1,7 +1,5 @@
 import { RLP } from './rlp';
 import BigNumber from 'bignumber.js';
-import { Module } from 'module';
-import { Script } from 'vm';
 const blake = require('blakejs');
 
 export namespace ScriptEngine {
@@ -216,14 +214,22 @@ export namespace ScriptEngine {
   } // end of Script Data encode/decode
 
   // Staking Body decode
-  export function decodeStakingBody(input: Buffer | string): StakingBody {
+  export function decodeStakingBody(input: Buffer | string): DecodedStakingBody {
     let buf: Buffer;
     if (typeof input === 'string') {
       buf = Buffer.from(input.replace('0x', ''), 'hex');
     } else {
       buf = input;
     }
-    return new RLP(StakingBodyProfile).decode(buf) as StakingBody;
+    const sb = new RLP(StakingBodyProfile).decode(buf) as StakingBody;
+    let extra: undefined | RewardInfo[] | Infraction = undefined;
+    if (sb.opCode === StakingOpCode.Governing) {
+      extra = decodeStakingGoverningExtra(sb.extra);
+    }
+    if (sb.opCode === StakingOpCode.DelegateStats) {
+      extra = decodeStakingStatExtra(sb.extra);
+    }
+    return new DecodedStakingBody(sb, extra);
   }
 
   // Auction Body decode
@@ -257,6 +263,17 @@ export namespace ScriptEngine {
       buf = input;
     }
     return new RLP(StakingGoverningExtraProfile).decode(buf) as RewardInfo[];
+  }
+
+  // Staking Statistics Extra decode
+  export function decodeStakingStatExtra(input: Buffer | string): Infraction {
+    let buf: Buffer;
+    if (typeof input === 'string') {
+      buf = Buffer.from(input.replace('0x', ''), 'hex');
+    } else {
+      buf = input;
+    }
+    return new RLP(InfractionProfile).decode(buf) as Infraction;
   }
 
   // Auction Tx decode
@@ -294,10 +311,10 @@ export namespace ScriptEngine {
   export class DecodedScriptData {
     public header: { version: number; modId: number };
     public payload: string;
-    public body: AuctionBody | StakingBody | AccountLockBody | undefined;
+    public body: AuctionBody | DecodedStakingBody | AccountLockBody | undefined;
     constructor(
       data: ScriptData,
-      body: AuctionBody | StakingBody | AccountLockBody | undefined = undefined
+      body: AuctionBody | DecodedStakingBody | AccountLockBody | undefined = undefined
     ) {
       this.header = { ...data.header };
       this.payload = data.payload;
@@ -344,6 +361,146 @@ export namespace ScriptEngine {
     }
   }
 
+  export class RoundInfo {
+    public epoch: number;
+    public round: number;
+    constructor(epoch: number, round: number) {
+      this.epoch = epoch;
+      this.round = round;
+    }
+  }
+
+  export class HeightInfo {
+    public epoch: number;
+    public height: number;
+    constructor(epoch: number, height: number) {
+      this.epoch = epoch;
+      this.height = height;
+    }
+  }
+  export class MissingLeader {
+    public counter: number;
+    public info: RoundInfo[];
+    constructor(counter: number, info: RoundInfo[]) {
+      this.counter = counter;
+      this.info = info;
+    }
+  }
+
+  export class MissingProposer {
+    public counter: number;
+    public info: HeightInfo[];
+    constructor(counter: number, info: HeightInfo[]) {
+      this.counter = counter;
+      this.info = info;
+    }
+  }
+
+  export class MissingVoter {
+    public counter: number;
+    public info: HeightInfo[];
+    constructor(counter: number, info: HeightInfo[]) {
+      this.counter = counter;
+      this.info = info;
+    }
+  }
+  export class DoubleSign {
+    public counter: number;
+    public info: HeightInfo[];
+    constructor(counter: number, info: HeightInfo[]) {
+      this.counter = counter;
+      this.info = info;
+    }
+  }
+  export class Infraction {
+    public missingLeader: MissingLeader;
+    public missingProposer: MissingProposer;
+    public missingVoter: MissingVoter;
+    public doubleSign: DoubleSign;
+    constructor(
+      missingLeader: MissingLeader,
+      missingProposer: MissingProposer,
+      missingVoter: MissingVoter,
+      doubleSign: DoubleSign
+    ) {
+      this.missingLeader = missingLeader;
+      this.missingProposer = missingProposer;
+      this.missingVoter = missingVoter;
+      this.doubleSign = doubleSign;
+    }
+
+    public encode(): string {
+      return '0x' + new RLP(InfractionProfile).encode(this).toString('hex');
+    }
+  }
+
+  export const MissingLeaderProfile: RLP.Profile = {
+    name: 'missingLeaderProfile',
+    kind: [
+      { name: 'counter', kind: new RLP.NumericKind() },
+      {
+        name: 'info',
+        kind: {
+          item: [
+            { name: 'epoch', kind: new RLP.NumericKind() },
+            { name: 'height', kind: new RLP.NumericKind() },
+          ],
+        },
+      },
+    ],
+  };
+
+  export const MissingProposerProfile: RLP.Profile = {
+    name: 'missingProposerProfile',
+    kind: [
+      { name: 'counter', kind: new RLP.NumericKind() },
+      {
+        name: 'info',
+        kind: {
+          item: [
+            { name: 'epoch', kind: new RLP.NumericKind() },
+            { name: 'round', kind: new RLP.NumericKind() },
+          ],
+        },
+      },
+    ],
+  };
+
+  export const MissingVoterProfile: RLP.Profile = {
+    name: 'missingVoterProfile',
+    kind: [
+      { name: 'counter', kind: new RLP.NumericKind() },
+      {
+        name: 'info',
+        kind: {
+          item: [
+            { name: 'epoch', kind: new RLP.NumericKind() },
+            { name: 'round', kind: new RLP.NumericKind() },
+          ],
+        },
+      },
+    ],
+  };
+  export const DoubleSignProfile: RLP.Profile = {
+    name: 'doubleSignProfile',
+    kind: [
+      { name: 'counter', kind: new RLP.NumericKind() },
+      {
+        name: 'info',
+        kind: {
+          item: [
+            { name: 'epoch', kind: new RLP.NumericKind() },
+            { name: 'round', kind: new RLP.NumericKind() },
+          ],
+        },
+      },
+    ],
+  };
+  export const InfractionProfile: RLP.Profile = {
+    name: 'infractionProfile',
+    kind: [MissingLeaderProfile, MissingProposerProfile, MissingVoterProfile, DoubleSignProfile],
+  };
+
   export const StakingBodyProfile: RLP.Profile = {
     name: 'stakingBodyProfile',
     kind: [
@@ -375,6 +532,45 @@ export namespace ScriptEngine {
       { name: 'timestamp', kind: new RLP.NumericKind() },
     ],
   };
+  export class DecodedStakingBody {
+    public opCode: StakingOpCode;
+    public version: number;
+    public option: number;
+    public holderAddr: string;
+    public candidateAddr: string;
+    public candidateName: string;
+    public candidateDescription: string;
+    public candidatePubKey: string;
+    public candidateIP: string;
+    public candidatePort: number;
+    public bucketID: string;
+    public amount: string;
+    public token: Token;
+    public autobid: number;
+    public timestamp: number;
+    public nonce: number;
+    public extra: undefined | Infraction | RewardInfo[];
+    constructor(sb: StakingBody, extra: undefined | Infraction | RewardInfo[]) {
+      this.opCode = sb.opCode;
+      this.version = sb.version;
+      this.option = sb.option;
+      this.holderAddr = sb.holderAddr;
+      this.candidateAddr = sb.candidateAddr;
+      this.candidateName = sb.candidateName;
+      this.candidateDescription = sb.candidateDescription;
+      this.candidatePubKey = sb.candidatePubKey;
+      this.candidateIP = sb.candidateIP;
+      this.candidatePort = sb.candidatePort;
+      this.bucketID = sb.bucketID;
+      this.amount = sb.amount;
+      this.token = sb.token;
+      this.autobid = sb.autobid;
+      this.timestamp = sb.timestamp;
+      this.nonce = sb.nonce;
+      this.extra = extra;
+    }
+  }
+
   export class StakingBody {
     public opCode: StakingOpCode;
     public version: number;
