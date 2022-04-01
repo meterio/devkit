@@ -40,29 +40,29 @@ export namespace ScriptEngine {
   export const explainStakingOpCode = (opCode: StakingOpCode) => {
     switch (opCode) {
       case StakingOpCode.Bound:
-        return 'staking bound';
+        return 'Bound';
       case StakingOpCode.Unbound:
-        return 'staking unbound';
+        return 'Unbound';
       case StakingOpCode.Candidate:
-        return 'staking candidate';
+        return 'Candidate';
       case StakingOpCode.Uncandidate:
-        return 'staking uncandidate';
+        return 'Uncandidate';
       case StakingOpCode.Delegate:
-        return 'staking delegate';
+        return 'Delegate';
       case StakingOpCode.Undelegate:
-        return 'staking undelegate';
+        return 'Undelegate';
       case StakingOpCode.CandidateUpdate:
-        return 'staking candidate update';
+        return 'UpdateCandidate';
       case StakingOpCode.BucketUpdate:
-        return 'staking bucket update';
+        return 'UpdateBucket';
       case StakingOpCode.DelegateStats:
-        return 'staking delegate stats';
+        return 'DelegateStats';
       case StakingOpCode.BailOut:
-        return 'staking bailout';
+        return 'BailOut';
       case StakingOpCode.FlushAllStats:
-        return 'staking clean stats';
+        return 'FlushStats';
       case StakingOpCode.Governing:
-        return 'staking governing';
+        return 'Govern';
     }
   };
 
@@ -94,16 +94,16 @@ export namespace ScriptEngine {
   export const explainAuctionOpCode = (opCode: AuctionOpCode, option: AuctionOption) => {
     switch (opCode) {
       case AuctionOpCode.Start:
-        return 'auction start';
+        return 'StartAuction';
       case AuctionOpCode.End:
-        return 'auction end';
+        return 'EndAuction';
       case AuctionOpCode.Bid:
         if (option === AuctionOption.Userbid) {
-          return 'auction userbid';
+          return 'Userbid';
         } else if (option === AuctionOption.Autobid) {
-          return 'auction autobid';
+          return 'Autobid';
         } else {
-          return 'auction bid';
+          return 'Bid';
         }
     }
   };
@@ -113,19 +113,19 @@ export namespace ScriptEngine {
     Add = 1, // only allowed in kblock
     Remove = 2, // only allowed in kblock
     Transfer = 3,
-    Governing = 4, // only allowed in kblock
+    Governing = 100, // only allowed in kblock
   }
 
   export const explainAccountLockOpCode = (opCode: AccountLockOpCode) => {
     switch (opCode) {
       case AccountLockOpCode.Add:
-        return 'account lock add';
+        return 'AddAcctLock';
       case AccountLockOpCode.Remove:
-        return 'account lock remove';
+        return 'RemoveAcctLock';
       case AccountLockOpCode.Transfer:
-        return 'account lock transfer';
+        return 'TransferAcctLock';
       case AccountLockOpCode.Governing:
-        return 'account lock governing';
+        return 'GovernAcctLock';
     }
   };
 
@@ -199,18 +199,22 @@ export namespace ScriptEngine {
     }
     const truncated = Buffer.from(hexStr.substring(sdPrefixStr.length), 'hex');
     const sd = new RLP(ScriptDataProfile).decode(truncated);
+    let action = '';
     switch (sd.header.modId) {
       case ModuleID.AccountLock:
         const alb = decodeAccountLockBody(sd.payload);
-        return new DecodedScriptData(sd, alb);
+        action = explainAccountLockOpCode(alb.opCode);
+        return new DecodedScriptData(sd, action, alb);
       case ModuleID.Auction:
         const ab = decodeAuctionBody(sd.payload);
-        return new DecodedScriptData(sd, ab);
+        action = explainAuctionOpCode(ab.opCode, ab.option);
+        return new DecodedScriptData(sd, action, ab);
       case ModuleID.Staking:
         const sb = decodeStakingBody(sd.payload);
-        return new DecodedScriptData(sd, sb);
+        action = explainStakingOpCode(sb.opCode);
+        return new DecodedScriptData(sd, action, sb);
     }
-    return new DecodedScriptData(sd);
+    return new DecodedScriptData(sd, '');
   } // end of Script Data encode/decode
 
   // Staking Body decode
@@ -311,13 +315,16 @@ export namespace ScriptEngine {
   export class DecodedScriptData {
     public header: { version: number; modId: number };
     public payload: string;
+    public action: string;
     public body: AuctionBody | DecodedStakingBody | AccountLockBody | undefined;
     constructor(
       data: ScriptData,
+      action: string,
       body: AuctionBody | DecodedStakingBody | AccountLockBody | undefined = undefined
     ) {
       this.header = { ...data.header };
       this.payload = data.payload;
+      this.action = action;
       this.body = body;
     }
   }

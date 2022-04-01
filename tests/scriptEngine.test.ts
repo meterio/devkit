@@ -277,4 +277,11 @@ describe('script engine', () => {
     const infraction = ScriptEngine.decodeStakingStatExtra(data);
     console.log(infraction);
   });
+
+  it('should decode account lock', () => {
+    const data =
+      '0xffffffffdeadbeeff839c4808203eab3f26405808080940000000000000000000000000000000000000000940000000000000000000000000000000000000000808080';
+    const decoded = ScriptEngine.decodeScriptData(data);
+    console.log('decoded: ', decoded);
+  });
 });
