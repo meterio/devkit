@@ -698,7 +698,7 @@ export namespace ScriptEngine {
       '', // pubkey
       '', // ip
       0, // port
-      '', // bucket id
+      EMPTY_BYTE32, // bucket id
       amount,
       Token.MeterGov,
       autobid, // autobid
@@ -752,7 +752,7 @@ export namespace ScriptEngine {
       '', //
       '', // ip
       0, // port
-      bucketID,
+      bucketID, // bucket id
       amount.toString(),
       Token.MeterGov,
       0, // autobid
@@ -817,7 +817,7 @@ export namespace ScriptEngine {
       candidatePubKey,
       candidateIP,
       candidatePort,
-      '',
+      EMPTY_BYTE32, // bucket id
       amount.toString(),
       Token.MeterGov,
       autobid, // autobid
@@ -839,7 +839,7 @@ export namespace ScriptEngine {
       '', // pubkey
       '', // ip
       0, // port
-      '', // bucket id
+      EMPTY_BYTE32, // bucket id
       0, // amount
       Token.MeterGov, // token
       0, // autobid
@@ -896,7 +896,7 @@ export namespace ScriptEngine {
       '', // pubkey
       '', // ip
       0, // port
-      stakingIDStr,
+      stakingIDStr, // bucket id
       amount.toString(),
       Token.MeterGov,
       0, // autobid
@@ -933,7 +933,7 @@ export namespace ScriptEngine {
       candidatePubKey,
       candidateIP,
       candidatePort,
-      '',
+      EMPTY_BYTE32, // bucket id
       0,
       Token.MeterGov,
       autobid, // autobid
@@ -955,7 +955,7 @@ export namespace ScriptEngine {
       '', // pubkey
       '', // ip
       0, // port
-      '', // bucket id
+      EMPTY_BYTE32, // bucket id
       '0', // amount
       Token.MeterGov,
       0, // autobid

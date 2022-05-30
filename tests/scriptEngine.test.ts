@@ -52,23 +52,25 @@ describe('script engine', () => {
   });
 
   it('candidate', () => {
-    const scriptData = ScriptEngine.getCandidateData(
-      candidateAddr,
-      candidateName,
-      candidateDesc,
-      candidatePubKey,
-      candidateIP,
-      candidatePort,
-      amount,
-      commission,
-      timestamp,
-      nonce,
-      autobid
+    const data = ScriptEngine.getCandidateData(
+      '0xac4acda6d9e4471da5b1f3815c7e6952cd34cb1b', // address
+      'shoal-11', // name
+      'shoal-11 desc', // desc
+      'BL5Mlj7G3sprNERzdrVJnsf73W1vBlWXFam7ZL7fCJWFJHdRN+SAApRuMG9HDVGOV/9WNugsd2vQWlR1jYf8R3o=:::ZkhnePEX4ghmJFC0bRjJ38xDpznR1szI834AGXBoHpfpR4QhanLlgVztQ+Edig9ZuiN94EvIghZzdNW8NP01MgE=', // pubkey
+      '44.236.203.192', // ip
+      8670, // port
+      '0x6c6b935b8bbd400000', // amount
+      1000, // commission
+      1617007471, // timestamp
+      8612573464126398, // nonce
+      0 // autobid
     );
-    const decoded = ScriptEngine.decodeScriptData(scriptData);
+    const decoded = ScriptEngine.decodeScriptData(data);
     const body = ScriptEngine.decodeStakingBody(decoded.payload);
-    expect(candidateAddr).equal(body.holderAddr);
-    expect(candidateAddr).equal(body.candidateAddr);
+    console.log(body);
+    const target =
+      '0xffffffffdeadbeeff90155c4808203e8b9014df9014a03808405f5e10094ac4acda6d9e4471da5b1f3815c7e6952cd34cb1b94ac4acda6d9e4471da5b1f3815c7e6952cd34cb1b8873686f616c2d31318d73686f616c2d31312064657363b8b3424c354d6c6a3747337370724e45527a6472564a6e73663733573176426c575846616d375a4c3766434a57464a4864524e2b5341417052754d4739484456474f562f39574e75677364327651576c52316a59663852336f3d3a3a3a5a6b686e655045583467686d4a46433062526a4a33387844707a6e5231737a49383334414758426f4870667052345168616e4c6c67567a74512b45646967395a75694e393445764967685a7a644e57384e5030314d67453d8e34342e3233362e3230332e3139328221dea00000000000000000000000000000000000000000000000000000000000000000896c6b935b8bbd4000000180846061936f871e991705ee63be80';
+    expect(data).equal(target);
   });
 
   it('uncandidate', () => {
@@ -154,10 +156,16 @@ describe('script engine', () => {
   });
 
   it('bailOut', () => {
-    const scriptData = ScriptEngine.getBailOutData(holderAddr, timestamp, nonce);
+    const scriptData = ScriptEngine.getBailOutData(
+      '0xac4acda6d9e4471da5b1f3815c7e6952cd34cb1b',
+      1653928116,
+      6158451306430886
+    );
     const decoded = ScriptEngine.decodeScriptData(scriptData);
     const body = ScriptEngine.decodeStakingBody(decoded.payload);
-    expect(holderAddr).equal(body.holderAddr);
+    const target =
+      '0xffffffffdeadbeeff86dc4808203e8b866f86466808094ac4acda6d9e4471da5b1f3815c7e6952cd34cb1b94ac4acda6d9e4471da5b1f3815c7e6952cd34cb1b8080808080a00000000000000000000000000000000000000000000000000000000000000000800180846294f0b48715e1142e7c81a680';
+    expect(scriptData).equal(target);
   });
 
   it('lockedTransfer', () => {
@@ -268,6 +276,7 @@ describe('script engine', () => {
     const data =
       'deadbeeff90187c4808203e8b9017ff9017c658082368894000000000000000000000000000000000000000094ab950438cf0dc5c2f98039731b9630358cc0deb9886a65746c6966653280b8b3424f5565327974614670307979696573716b57714974704f303644366e512f5659495448437135494b62537052746b457a4568574b4373783156726861594978354c3635536c68443961556b36345030702b47724466343d3a3a3a4b42735034506671372f6e7a516d6f6b387546784942444949694a31396f463858525565712f376f644a4f7758567a5a74584b663865717a6742697750426d32683656785a554f6a744541797a6e6a59414632666751453d8080a00000000000000000000000000000000000000000000000000000000000000000808080846231b9b388f2cac874983a5566b858f856c280c0f84b08f848c882368884014f37f6c882368884014f388cc882368884014f3922c882368884014f39b7c882368884014f3a4dc882368884014f3ae3c882368884014f3b79c882368884014f3c0fc280c0c280c0';
     const decoded = ScriptEngine.decodeScriptData(data);
+
     console.log('Body: ', decoded.body);
   });
 
@@ -278,10 +287,11 @@ describe('script engine', () => {
     console.log(infraction);
   });
 
-  it('should decode account lock', () => {
-    const data =
-      '0xffffffffdeadbeeff839c4808203eab3f26405808080940000000000000000000000000000000000000000940000000000000000000000000000000000000000808080';
-    const decoded = ScriptEngine.decodeScriptData(data);
-    console.log('decoded: ', decoded);
-  });
+  // it('should decode account lock', () => {
+  //   const data =
+  //     '0xffffffffdeadbeeff839c4808203eab3f26405808080940000000000000000000000000000000000000000940000000000000000000000000000000000000000808080';
+  //   const decoded = ScriptEngine.decodeScriptData(data);
+  //   ScriptEngine.encodeScriptData(ScriptEngine.ModuleID.AccountLock, decoded);
+  //   console.log('decoded: ', decoded);
+  // });
 });
