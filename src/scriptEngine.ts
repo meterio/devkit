@@ -719,7 +719,7 @@ export namespace ScriptEngine {
       StakingOpCode.Unbound,
       StakingOption.Empty,
       holderAddr,
-      '', // candidate addr
+      EMPTY_ADDRESS, // candidate addr
       '', // name
       '', // desc
       '', // pubkey
@@ -890,7 +890,7 @@ export namespace ScriptEngine {
       StakingOpCode.Undelegate,
       StakingOption.Empty,
       holderAddr,
-      '', // candidate addr
+      EMPTY_ADDRESS, // candidate addr
       '', // name
       '', // desc
       '', // pubkey

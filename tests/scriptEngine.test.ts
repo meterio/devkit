@@ -130,6 +130,19 @@ describe('script engine', () => {
     expect(holderAddr).equal(body.holderAddr);
   });
 
+  it('decode unbound', () => {
+    const scriptData = ScriptEngine.getUnboundData(
+      '0x1de8ca2f973d026300af89041b0ecb1c0803a7e6',
+      '0x10f11834b4fb2f64290937aad6f14981732fd69df10d86dc9cb87c988e118ef5',
+      '0x56bc75e2d63100000',
+      1654813833,
+      3685690561349966
+    );
+    expect(scriptData).eq(
+      '0xffffffffdeadbeeff876c4808203e8b86ff86d028080941de8ca2f973d026300af89041b0ecb1c0803a7e69400000000000000000000000000000000000000008080808080a010f11834b4fb2f64290937aad6f14981732fd69df10d86dc9cb87c988e118ef589056bc75e2d6310000001808462a27489870d181db4a9494e80'
+    );
+  });
+
   it('bid', () => {
     const scriptData = ScriptEngine.getBidData(holderAddr, amount, timestamp, nonce);
     const decoded = ScriptEngine.decodeScriptData(scriptData);
