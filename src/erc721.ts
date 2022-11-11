@@ -2,7 +2,7 @@
 import { abi } from './abi';
 import { XORBatch } from './bitwise';
 
-const ApprovalABI: abi.Event.Definition = {
+const ApprovalABI = {
   anonymous: false,
   inputs: [
     { indexed: true, name: 'owner', type: 'address' },
@@ -13,7 +13,7 @@ const ApprovalABI: abi.Event.Definition = {
   type: 'event',
 };
 
-const TransferABI: abi.Event.Definition = {
+const TransferABI = {
   anonymous: false,
   inputs: [
     { indexed: true, name: 'from', type: 'address' },
@@ -24,7 +24,7 @@ const TransferABI: abi.Event.Definition = {
   type: 'event',
 };
 
-const ApprovalForAllABI: abi.Event.Definition = {
+const ApprovalForAllABI = {
   anonymous: false,
   inputs: [
     { indexed: true, internalType: 'address', name: 'owner', type: 'address' },
@@ -35,7 +35,7 @@ const ApprovalForAllABI: abi.Event.Definition = {
   type: 'event',
 };
 
-const approveABI: abi.Function.Definition = {
+const approveABI = {
   inputs: [
     { name: 'to', type: 'address' },
     { name: 'tokenId', type: 'uint256' },
@@ -46,7 +46,7 @@ const approveABI: abi.Function.Definition = {
   type: 'function',
 };
 
-const balanceOfABI: abi.Function.Definition = {
+const balanceOfABI = {
   inputs: [{ internalType: 'address', name: 'owner', type: 'address' }],
   name: 'balanceOf',
   outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
@@ -54,7 +54,7 @@ const balanceOfABI: abi.Function.Definition = {
   type: 'function',
 };
 
-const getApprovedABI: abi.Function.Definition = {
+const getApprovedABI = {
   inputs: [{ internalType: 'uint256', name: 'tokenId', type: 'uint256' }],
   name: 'getApproved',
   outputs: [{ internalType: 'address', name: '', type: 'address' }],
@@ -62,7 +62,7 @@ const getApprovedABI: abi.Function.Definition = {
   type: 'function',
 };
 
-const isApprovedForAllABI: abi.Function.Definition = {
+const isApprovedForAllABI = {
   inputs: [
     { internalType: 'address', name: 'owner', type: 'address' },
     { internalType: 'address', name: 'operator', type: 'address' },
@@ -73,7 +73,7 @@ const isApprovedForAllABI: abi.Function.Definition = {
   type: 'function',
 };
 
-const ownerOfABI: abi.Function.Definition = {
+const ownerOfABI = {
   inputs: [{ internalType: 'uint256', name: 'tokenId', type: 'uint256' }],
   name: 'ownerOf',
   outputs: [{ internalType: 'address', name: '', type: 'address' }],
@@ -81,7 +81,7 @@ const ownerOfABI: abi.Function.Definition = {
   type: 'function',
 };
 
-const safeTransferFromABI: abi.Function.Definition = {
+const safeTransferFromABI = {
   inputs: [
     { internalType: 'address', name: 'from', type: 'address' },
     { internalType: 'address', name: 'to', type: 'address' },
@@ -93,7 +93,7 @@ const safeTransferFromABI: abi.Function.Definition = {
   type: 'function',
 };
 
-const safeTransferFrom2ABI: abi.Function.Definition = {
+const safeTransferFrom2ABI = {
   inputs: [
     { internalType: 'address', name: 'from', type: 'address' },
     { internalType: 'address', name: 'to', type: 'address' },
@@ -106,7 +106,7 @@ const safeTransferFrom2ABI: abi.Function.Definition = {
   type: 'function',
 };
 
-const setApprovalForAllABI: abi.Function.Definition = {
+const setApprovalForAllABI = {
   inputs: [
     { internalType: 'address', name: 'operator', type: 'address' },
     { internalType: 'bool', name: 'approved', type: 'bool' },
@@ -117,7 +117,7 @@ const setApprovalForAllABI: abi.Function.Definition = {
   type: 'function',
 };
 
-const transferFromABI: abi.Function.Definition = {
+const transferFromABI = {
   inputs: [
     { internalType: 'address', name: 'from', type: 'address' },
     { internalType: 'address', name: 'to', type: 'address' },
@@ -130,7 +130,7 @@ const transferFromABI: abi.Function.Definition = {
 };
 
 // ERC721 metadata
-const nameABI: abi.Function.Definition = {
+const nameABI = {
   inputs: [],
   name: 'name',
   outputs: [{ internalType: 'string', name: '', type: 'string' }],
@@ -138,7 +138,7 @@ const nameABI: abi.Function.Definition = {
   type: 'function',
 };
 
-const symbolABI: abi.Function.Definition = {
+const symbolABI = {
   inputs: [],
   name: 'symbol',
   outputs: [{ internalType: 'string', name: '', type: 'string' }],
@@ -146,7 +146,7 @@ const symbolABI: abi.Function.Definition = {
   type: 'function',
 };
 
-const tokenURIABI: abi.Function.Definition = {
+const tokenURIABI = {
   inputs: [{ internalType: 'uint256', name: 'tokenId', type: 'uint256' }],
   name: 'tokenURI',
   outputs: [{ internalType: 'string', name: '', type: 'string' }],
@@ -154,19 +154,38 @@ const tokenURIABI: abi.Function.Definition = {
   type: 'function',
 };
 
-const Transfer = new abi.Event(TransferABI);
-const Approval = new abi.Event(ApprovalABI);
-const ApprovalForAll = new abi.Event(ApprovalForAllABI);
+const Transfer = new abi.Event(TransferABI as abi.Event.Definition);
+const Approval = new abi.Event(ApprovalABI as abi.Event.Definition);
+const ApprovalForAll = new abi.Event(ApprovalForAllABI as abi.Event.Definition);
 
-const balanceOf = new abi.Function(balanceOfABI);
-const ownerOf = new abi.Function(ownerOfABI);
-const safeTransferFrom2 = new abi.Function(safeTransferFrom2ABI);
-const safeTransferFrom = new abi.Function(safeTransferFromABI);
-const transferFrom = new abi.Function(transferFromABI);
-const approve = new abi.Function(approveABI);
-const setApprovalForAll = new abi.Function(setApprovalForAllABI);
-const getApproved = new abi.Function(getApprovedABI);
-const isApprovedForAll = new abi.Function(isApprovedForAllABI);
+const balanceOf = new abi.Function(balanceOfABI as abi.Function.Definition);
+const ownerOf = new abi.Function(ownerOfABI as abi.Function.Definition);
+const safeTransferFrom2 = new abi.Function(safeTransferFrom2ABI as abi.Function.Definition);
+const safeTransferFrom = new abi.Function(safeTransferFromABI as abi.Function.Definition);
+const transferFrom = new abi.Function(transferFromABI as abi.Function.Definition);
+const approve = new abi.Function(approveABI as abi.Function.Definition);
+const setApprovalForAll = new abi.Function(setApprovalForAllABI as abi.Function.Definition);
+const getApproved = new abi.Function(getApprovedABI as abi.Function.Definition);
+const isApprovedForAll = new abi.Function(isApprovedForAllABI as abi.Function.Definition);
+
+export const ERC721ABI = {
+  Transfer: TransferABI,
+  Approval: ApprovalABI,
+  ApprovalForAll: ApprovalForAllABI,
+
+  balanceOf: balanceOfABI,
+  ownerOf: ownerOfABI,
+  safeTransferFrom: safeTransferFromABI,
+  safeTransferFrom2: safeTransferFrom2ABI,
+  transferFrom: transferFromABI,
+  approve: approveABI,
+  setApprovalForAll: setApprovalForAllABI,
+  getApproved: getApprovedABI,
+  isApprovedForAll: isApprovedForAllABI,
+  tokenURI: tokenURIABI,
+  name: nameABI,
+  symbol: symbolABI,
+};
 
 export const ERC721 = {
   Transfer,
@@ -194,9 +213,9 @@ export const ERC721 = {
   ),
 };
 
-const name = new abi.Function(nameABI);
-const symbol = new abi.Function(symbolABI);
-const tokenURI = new abi.Function(tokenURIABI);
+const name = new abi.Function(nameABI as abi.Function.Definition);
+const symbol = new abi.Function(symbolABI as abi.Function.Definition);
+const tokenURI = new abi.Function(tokenURIABI as abi.Function.Definition);
 
 export const ERC721Metadata = {
   name,

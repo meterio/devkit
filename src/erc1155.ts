@@ -1,7 +1,7 @@
 import { abi } from './abi';
 import { XORBatch } from './bitwise';
 
-const TransferSingleABI: abi.Event.Definition = {
+const TransferSingleABI = {
   anonymous: false,
   inputs: [
     { indexed: true, internalType: 'address', name: 'operator', type: 'address' },
@@ -14,7 +14,7 @@ const TransferSingleABI: abi.Event.Definition = {
   type: 'event',
 };
 
-const TransferBatchABI: abi.Event.Definition = {
+const TransferBatchABI = {
   anonymous: false,
   inputs: [
     { indexed: true, internalType: 'address', name: 'operator', type: 'address' },
@@ -27,7 +27,7 @@ const TransferBatchABI: abi.Event.Definition = {
   type: 'event',
 };
 
-const ApprovalForAllABI: abi.Event.Definition = {
+const ApprovalForAllABI = {
   anonymous: false,
   inputs: [
     { indexed: true, internalType: 'address', name: 'account', type: 'address' },
@@ -38,7 +38,7 @@ const ApprovalForAllABI: abi.Event.Definition = {
   type: 'event',
 };
 
-const URIABI: abi.Event.Definition = {
+const URIABI = {
   anonymous: false,
   inputs: [
     { indexed: false, internalType: 'string', name: 'value', type: 'string' },
@@ -48,7 +48,7 @@ const URIABI: abi.Event.Definition = {
   type: 'event',
 };
 
-const safeTransferFromABI: abi.Function.Definition = {
+const safeTransferFromABI = {
   inputs: [
     { internalType: 'address', name: 'from', type: 'address' },
     { internalType: 'address', name: 'to', type: 'address' },
@@ -61,7 +61,7 @@ const safeTransferFromABI: abi.Function.Definition = {
   stateMutability: 'nonpayable',
   type: 'function',
 };
-const safeBatchTransferFromABI: abi.Function.Definition = {
+const safeBatchTransferFromABI = {
   inputs: [
     { internalType: 'address', name: 'from', type: 'address' },
     { internalType: 'address', name: 'to', type: 'address' },
@@ -74,7 +74,7 @@ const safeBatchTransferFromABI: abi.Function.Definition = {
   stateMutability: 'nonpayable',
   type: 'function',
 };
-const balanceOfABI: abi.Function.Definition = {
+const balanceOfABI = {
   inputs: [
     { internalType: 'address', name: 'account', type: 'address' },
     { internalType: 'uint256', name: 'id', type: 'uint256' },
@@ -84,7 +84,7 @@ const balanceOfABI: abi.Function.Definition = {
   stateMutability: 'view',
   type: 'function',
 };
-const balanceOfBatchABI: abi.Function.Definition = {
+const balanceOfBatchABI = {
   inputs: [
     { internalType: 'address[]', name: 'accounts', type: 'address[]' },
     { internalType: 'uint256[]', name: 'ids', type: 'uint256[]' },
@@ -94,7 +94,7 @@ const balanceOfBatchABI: abi.Function.Definition = {
   stateMutability: 'view',
   type: 'function',
 };
-const setApprovalForAllABI: abi.Function.Definition = {
+const setApprovalForAllABI = {
   inputs: [
     { internalType: 'address', name: 'operator', type: 'address' },
     { internalType: 'bool', name: 'approved', type: 'bool' },
@@ -104,7 +104,7 @@ const setApprovalForAllABI: abi.Function.Definition = {
   stateMutability: 'nonpayable',
   type: 'function',
 };
-const isApprovedForAllABI: abi.Function.Definition = {
+const isApprovedForAllABI = {
   inputs: [
     { internalType: 'address', name: 'account', type: 'address' },
     { internalType: 'address', name: 'operator', type: 'address' },
@@ -114,17 +114,46 @@ const isApprovedForAllABI: abi.Function.Definition = {
   stateMutability: 'view',
   type: 'function',
 };
-const TransferSingle = new abi.Event(TransferSingleABI);
-const TransferBatch = new abi.Event(TransferBatchABI);
-const ApprovalForAll = new abi.Event(ApprovalForAllABI);
-const URI = new abi.Event(URIABI);
 
-const balanceOf = new abi.Function(balanceOfABI);
-const balanceOfBatch = new abi.Function(balanceOfBatchABI);
-const safeBatchTransferFrom = new abi.Function(safeBatchTransferFromABI);
-const safeTransferFrom = new abi.Function(safeTransferFromABI);
-const setApprovalForAll = new abi.Function(setApprovalForAllABI);
-const isApprovedForAll = new abi.Function(isApprovedForAllABI);
+const TransferSingle = new abi.Event(TransferSingleABI as abi.Event.Definition);
+const TransferBatch = new abi.Event(TransferBatchABI as abi.Event.Definition);
+const ApprovalForAll = new abi.Event(ApprovalForAllABI as abi.Event.Definition);
+const URI = new abi.Event(URIABI as abi.Event.Definition);
+
+const balanceOf = new abi.Function(balanceOfABI as abi.Function.Definition);
+const balanceOfBatch = new abi.Function(balanceOfBatchABI as abi.Function.Definition);
+const safeBatchTransferFrom = new abi.Function(safeBatchTransferFromABI as abi.Function.Definition);
+const safeTransferFrom = new abi.Function(safeTransferFromABI as abi.Function.Definition);
+const setApprovalForAll = new abi.Function(setApprovalForAllABI as abi.Function.Definition);
+const isApprovedForAll = new abi.Function(isApprovedForAllABI as abi.Function.Definition);
+
+const uriABI = {
+  inputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+  name: 'uri',
+  outputs: [{ internalType: 'string', name: '', type: 'string' }],
+  stateMutability: 'view',
+  type: 'function',
+};
+
+const uri = new abi.Function(uriABI as abi.Function.Definition);
+
+export const ERC1155Metadata = {
+  uri,
+  interfaceID: XORBatch(uri.signature),
+};
+
+export const ERC1155ABI = {
+  TransferSingle: TransferSingleABI,
+  TransferBatch: TransferBatchABI,
+  ApprovalForAll: ApprovalForAllABI,
+  URI: URIABI, // event
+  uri: uriABI, // function
+  balanceOf: balanceOfABI,
+  balanceOfBatch: balanceOfBatchABI,
+  safeTransferFrom: safeTransferFromABI,
+  setApprovalForAll: setApprovalForAllABI,
+  isApprovedForAll: isApprovedForAllABI,
+};
 
 export const ERC1155 = {
   TransferSingle,
@@ -145,17 +174,4 @@ export const ERC1155 = {
     setApprovalForAll.signature,
     isApprovedForAll.signature
   ),
-};
-
-const uri = new abi.Function({
-  inputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
-  name: 'uri',
-  outputs: [{ internalType: 'string', name: '', type: 'string' }],
-  stateMutability: 'view',
-  type: 'function',
-});
-
-export const ERC1155Metadata = {
-  uri,
-  interfaceID: XORBatch(uri.signature),
 };

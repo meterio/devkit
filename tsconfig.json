@@ -9,9 +9,7 @@
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
     "useUnknownInCatchVariables": false,
-    "esModuleInterop":true
+    "esModuleInterop": true
   },
-  "include": [
-    "./src"
-  ]
+  "include": ["./src", "tests/keystore2hex.ts", "tests/keystore2hex.ts"]
 }
