@@ -1,6 +1,6 @@
 import { abi } from './abi';
 
-const Transfer = new abi.Event({
+const TransferABI = {
   anonymous: false,
   inputs: [
     { indexed: true, internalType: 'address', name: 'from', type: 'address' },
@@ -9,9 +9,10 @@ const Transfer = new abi.Event({
   ],
   name: 'Transfer',
   type: 'event',
-});
+};
+const Transfer = new abi.Event(TransferABI as abi.Event.Definition);
 
-const Approval = new abi.Event({
+const ApprovalABI = {
   anonymous: false,
   inputs: [
     { indexed: true, internalType: 'address', name: 'owner', type: 'address' },
@@ -20,49 +21,58 @@ const Approval = new abi.Event({
   ],
   name: 'Approval',
   type: 'event',
-});
+};
 
-const balanceOf = new abi.Function({
+const Approval = new abi.Event(ApprovalABI as abi.Event.Definition);
+
+const balanceOfABI = {
   inputs: [{ internalType: 'address', name: 'account', type: 'address' }],
   name: 'balanceOf',
   outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
   stateMutability: 'view',
   type: 'function',
-});
+};
 
-const decimals = new abi.Function({
+const balanceOf = new abi.Function(balanceOfABI as abi.Function.Definition);
+
+const decimalsABI = {
   inputs: [],
   name: 'decimals',
   outputs: [{ internalType: 'uint8', name: '', type: 'uint8' }],
   stateMutability: 'view',
   type: 'function',
-});
+};
 
-const name = new abi.Function({
+const decimals = new abi.Function(decimalsABI as abi.Function.Definition);
+
+const nameABI = {
   inputs: [],
   name: 'name',
   outputs: [{ internalType: 'string', name: '', type: 'string' }],
   stateMutability: 'view',
   type: 'function',
-});
+};
+const name = new abi.Function(nameABI as abi.Function.Definition);
 
-const symbol = new abi.Function({
+const symbolABI = {
   inputs: [],
   name: 'symbol',
   outputs: [{ internalType: 'string', name: '', type: 'string' }],
   stateMutability: 'view',
   type: 'function',
-});
+};
+const symbol = new abi.Function(symbolABI as abi.Function.Definition);
 
-const totalSupply = new abi.Function({
+const totalSupplyABI = {
   inputs: [],
   name: 'totalSupply',
   outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
   stateMutability: 'view',
   type: 'function',
-});
+};
+const totalSupply = new abi.Function(totalSupplyABI as abi.Function.Definition);
 
-const transfer = new abi.Function({
+const transferABI = {
   inputs: [
     { internalType: 'address', name: 'to', type: 'address' },
     { internalType: 'uint256', name: 'amount', type: 'uint256' },
@@ -71,9 +81,10 @@ const transfer = new abi.Function({
   outputs: [{ internalType: 'bool', name: '', type: 'bool' }],
   stateMutability: 'nonpayable',
   type: 'function',
-});
+};
+const transfer = new abi.Function(transferABI as abi.Function.Definition);
 
-const transferFrom = new abi.Function({
+const transferFromABI = {
   inputs: [
     { internalType: 'address', name: 'from', type: 'address' },
     { internalType: 'address', name: 'to', type: 'address' },
@@ -83,9 +94,10 @@ const transferFrom = new abi.Function({
   outputs: [{ internalType: 'bool', name: '', type: 'bool' }],
   stateMutability: 'nonpayable',
   type: 'function',
-});
+};
+const transferFrom = new abi.Function(transferFromABI as abi.Function.Definition);
 
-const approve = new abi.Function({
+const approveABI = {
   inputs: [
     { internalType: 'address', name: 'spender', type: 'address' },
     { internalType: 'uint256', name: 'amount', type: 'uint256' },
@@ -94,9 +106,10 @@ const approve = new abi.Function({
   outputs: [{ internalType: 'bool', name: '', type: 'bool' }],
   stateMutability: 'nonpayable',
   type: 'function',
-});
+};
+const approve = new abi.Function(approveABI as abi.Function.Definition);
 
-const allowance = new abi.Function({
+const allowanceABI = {
   inputs: [
     { internalType: 'address', name: 'owner', type: 'address' },
     { internalType: 'address', name: 'spender', type: 'address' },
@@ -105,7 +118,22 @@ const allowance = new abi.Function({
   outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
   stateMutability: 'view',
   type: 'function',
-});
+};
+const allowance = new abi.Function(allowanceABI as abi.Function.Definition);
+
+export const ERC20ABI = {
+  ApprovalABI,
+  TransferABI,
+  balanceOfABI,
+  totalSupplyABI,
+  transferABI,
+  transferFromABI,
+  approveABI,
+  allowanceABI,
+  nameABI,
+  decimalsABI,
+  symbolABI,
+};
 
 export const ERC20 = {
   Approval,

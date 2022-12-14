@@ -8,6 +8,7 @@ export * from './bloom';
 export * from './certificate';
 export * from './scriptEngine';
 export * from './chain';
+export * from './eip173';
 export * from './erc20';
 export * from './erc165';
 export * from './erc721';
