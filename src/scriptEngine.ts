@@ -226,9 +226,13 @@ export namespace ScriptEngine {
       buf = input;
     }
     const sb = new RLP(StakingBodyProfile).decode(buf) as StakingBody;
-    let extra: undefined | RewardInfo[] | Infraction = undefined;
+    let extra: undefined | RewardInfo[] | Infraction | RewardInfoV2[] = undefined;
     if (sb.opCode === StakingOpCode.Governing) {
-      extra = decodeStakingGoverningExtra(sb.extra);
+      try {
+        extra = decodeStakingGoverningV2Extra(sb.extra);
+      } catch (e) {
+        extra = decodeStakingGoverningExtra(sb.extra);
+      }
     }
     if (sb.opCode === StakingOpCode.DelegateStats) {
       extra = decodeStakingStatExtra(sb.extra);
@@ -267,6 +271,17 @@ export namespace ScriptEngine {
       buf = input;
     }
     return new RLP(StakingGoverningExtraProfile).decode(buf) as RewardInfo[];
+  }
+
+  // Staking Governing Extra decode
+  export function decodeStakingGoverningV2Extra(input: Buffer | string): RewardInfoV2[] {
+    let buf: Buffer;
+    if (typeof input === 'string') {
+      buf = Buffer.from(input.replace('0x', ''), 'hex');
+    } else {
+      buf = input;
+    }
+    return new RLP(StakingGoverningV2ExtraProfile).decode(buf) as RewardInfoV2[];
   }
 
   // Staking Statistics Extra decode
@@ -359,12 +374,35 @@ export namespace ScriptEngine {
       ],
     },
   };
+
+  export const StakingGoverningV2ExtraProfile: RLP.Profile = {
+    name: 'stakingGoverningV2ExtraProfile',
+    kind: {
+      item: [
+        { name: 'address', kind: new RLP.HexKind() },
+        { name: 'distAmount', kind: new RLP.NumericKind() },
+        { name: 'autobidAmount', kind: new RLP.NumericKind() },
+      ],
+    },
+  };
+
   export class RewardInfo {
     public address: string;
     public amount: string;
     constructor(address: string, amount: string) {
       this.address = address;
       this.amount = amount;
+    }
+  }
+
+  export class RewardInfoV2 {
+    public address: string;
+    public distAmount: string;
+    public autobidAmount: string;
+    constructor(address: string, distAmount: string, autobidAmount: string) {
+      this.address = address;
+      this.distAmount = distAmount;
+      this.autobidAmount = autobidAmount;
     }
   }
 
@@ -556,8 +594,8 @@ export namespace ScriptEngine {
     public autobid: number;
     public timestamp: number;
     public nonce: number;
-    public extra: undefined | Infraction | RewardInfo[];
-    constructor(sb: StakingBody, extra: undefined | Infraction | RewardInfo[]) {
+    public extra: undefined | Infraction | RewardInfo[] | RewardInfoV2[];
+    constructor(sb: StakingBody, extra: undefined | Infraction | RewardInfo[] | RewardInfoV2[]) {
       this.opCode = sb.opCode;
       this.version = sb.version;
       this.option = sb.option;
