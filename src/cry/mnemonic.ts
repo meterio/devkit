@@ -1,4 +1,4 @@
-import { entropyToMnemonic, isValidMnemonic, fromMnemonic } from 'ethers/utils/hdnode';
+import { entropyToMnemonic, isValidMnemonic, HDNode } from '@ethersproject/hdnode';
 import { randomBytes } from 'crypto';
 
 export namespace mnemonic {
@@ -23,7 +23,7 @@ export namespace mnemonic {
    * the derivation path is defined at https://github.com/satoshilabs/slips/blob/master/slip-0044.md
    */
   export function derivePrivateKey(words: string[]): Buffer {
-    const node = fromMnemonic(words.join(' '));
+    const node = HDNode.fromMnemonic(words.join(' '));
     return Buffer.from(node.derivePath(`${VET_DERIVATION_PATH}/0`).privateKey.slice(2), 'hex');
   }
 }

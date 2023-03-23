@@ -4,34 +4,30 @@ import aes from 'aes-js';
 import scrypt from 'scrypt-js';
 import { v4 as uuidv4 } from 'uuid';
 
-import { SigningKey } from 'ethers/utils/signing-key';
-import {
-  entropyToMnemonic,
-  mnemonicToEntropy,
-  fromMnemonic,
-  defaultPath,
-} from 'ethers/utils/hdnode';
+import { SigningKey } from '@ethersproject/signing-key';
+import { entropyToMnemonic, mnemonicToEntropy, defaultPath, HDNode } from '@ethersproject/hdnode';
 
-import { getAddress } from 'ethers/utils/address';
-import { arrayify, concat, hexlify } from 'ethers/utils/bytes';
-import { pbkdf2 } from 'ethers/utils/pbkdf2';
-import { keccak256 } from 'ethers/utils/keccak256';
-import { toUtf8Bytes, UnicodeNormalizationForm } from 'ethers/utils/utf8';
-import { randomBytes } from 'ethers/utils/random-bytes';
+import { getAddress } from '@ethersproject/address';
+import { computeAddress } from 'ethers/lib/utils';
+import { arrayify, concat, hexlify } from '@ethersproject/bytes';
+import { pbkdf2 } from '@ethersproject/pbkdf2';
+import { keccak256 } from '@ethersproject/keccak256';
+import { toUtf8Bytes, UnicodeNormalizationForm } from '@ethersproject/strings';
+import { randomBytes } from '@ethersproject/random';
 
 // Imported Types
-import { Arrayish } from 'ethers/utils/bytes';
+import { BytesLike } from '@ethersproject/bytes';
 
 // Exported Types
 export type ProgressCallback = (percent: number) => void;
 
 export type EncryptOptions = {
-  iv?: Arrayish;
-  entropy?: Arrayish;
+  iv?: BytesLike;
+  entropy?: BytesLike;
   mnemonic?: string;
   path?: string;
   client?: string;
-  salt?: Arrayish;
+  salt?: BytesLike;
   uuid?: string;
   scrypt?: {
     N?: number;
@@ -55,7 +51,7 @@ function zpad(value: String | number, length: number): String {
   return value;
 }
 
-function getPassword(password: Arrayish): Uint8Array {
+function getPassword(password: BytesLike): Uint8Array {
   if (typeof password === 'string') {
     return toUtf8Bytes(password, UnicodeNormalizationForm.NFKC);
   }
@@ -89,9 +85,9 @@ function searchPath(object: any, path: string): string {
   return currentChild;
 }
 
-// @TODO: Make a type for string or arrayish
+// @TODO: Make a type for string or BytesLike
 // See: https://github.com/ethereum/pyethsaletool
-export function decryptCrowdsale(json: string, password: Arrayish | string): SigningKey {
+export function decryptCrowdsale(json: string, password: BytesLike | string): SigningKey {
   var data = JSON.parse(json);
 
   password = getPassword(password);
@@ -111,7 +107,7 @@ export function decryptCrowdsale(json: string, password: Arrayish | string): Sig
   var encryptedSeed = encseed.slice(16);
 
   // Decrypt the seed
-  var aesCbc = new aes.ModeOfOperation.cbc(key, iv);
+  var aesCbc = new aes.ModeOfOperation.cbc(Buffer.from(key, 'hex'), iv);
   var seed = arrayify(aesCbc.decrypt(encryptedSeed));
   seed = aes.padding.pkcs7.strip(seed);
 
@@ -121,26 +117,28 @@ export function decryptCrowdsale(json: string, password: Arrayish | string): Sig
     seedHex += String.fromCharCode(seed[i]);
   }
 
-  var seedHexBytes = toUtf8Bytes(seedHex);
+  var seedHexBytesLike = toUtf8Bytes(seedHex);
 
-  var signingKey = new SigningKey(keccak256(seedHexBytes));
+  const pk = keccak256(seedHexBytesLike);
+  var signingKey = new SigningKey(pk);
 
-  if (signingKey.address !== ethaddr) {
+  const signer = computeAddress(pk);
+  if (signer !== ethaddr) {
     throw new Error('corrupt crowdsale wallet');
   }
 
   return signingKey;
 }
 
-//@TODO: string or arrayish
+//@TODO: string or BytesLike
 export function decrypt(
   json: string,
-  password: Arrayish,
+  password: BytesLike,
   progressCallback?: ProgressCallback
 ): Promise<SigningKey> {
   var data = JSON.parse(json);
 
-  let passwordBytes = getPassword(password);
+  let passwordBytesLike = getPassword(password);
 
   var decrypt = function (key: Uint8Array, ciphertext: Uint8Array): Uint8Array {
     var cipher = searchPath(data, 'crypto/cipher');
@@ -178,7 +176,8 @@ export function decrypt(
     }
 
     var signingKey = new SigningKey(privateKey);
-    if (signingKey.address !== getAddress(data.address)) {
+    const signer = computeAddress(privateKey);
+    if (signer !== getAddress(data.address)) {
       reject(new Error('address mismatch'));
       return null;
     }
@@ -196,13 +195,13 @@ export function decrypt(
       var entropy = arrayify(mnemonicAesCtr.decrypt(mnemonicCiphertext));
       var mnemonic = entropyToMnemonic(entropy);
 
-      var node = fromMnemonic(mnemonic).derivePath(path);
+      var node = HDNode.fromMnemonic(mnemonic).derivePath(path);
       if (node.privateKey != hexlify(privateKey)) {
         reject(new Error('mnemonic mismatch'));
         return null;
       }
 
-      signingKey = new SigningKey(node);
+      signingKey = new SigningKey(node.privateKey);
     }
 
     return signingKey;
@@ -236,26 +235,34 @@ export function decrypt(
         if (progressCallback) {
           progressCallback(0);
         }
-        scrypt(passwordBytes, salt, N, r, p, 64, function (error: any, progress: any, key: any) {
-          if (error) {
-            error.progress = progress;
-            reject(error);
-          } else if (key) {
-            key = arrayify(key);
+        scrypt(
+          passwordBytesLike,
+          salt,
+          N,
+          r,
+          p,
+          64,
+          function (error: any, progress: any, key: any) {
+            if (error) {
+              error.progress = progress;
+              reject(error);
+            } else if (key) {
+              key = arrayify(key);
 
-            var signingKey = getSigningKey(key, reject);
-            if (!signingKey) {
-              return;
-            }
+              var signingKey = getSigningKey(key, reject);
+              if (!signingKey) {
+                return;
+              }
 
-            if (progressCallback) {
-              progressCallback(1);
+              if (progressCallback) {
+                progressCallback(1);
+              }
+              resolve(signingKey);
+            } else if (progressCallback) {
+              return progressCallback(progress);
             }
-            resolve(signingKey);
-          } else if (progressCallback) {
-            return progressCallback(progress);
           }
-        });
+        );
       } else if (kdf.toLowerCase() === 'pbkdf2') {
         var salt = looseArrayify(searchPath(data, 'crypto/kdfparams/salt'));
 
@@ -278,9 +285,9 @@ export function decrypt(
           return;
         }
 
-        var key = pbkdf2(passwordBytes, salt, c, dkLen, prfFunc);
+        var key = pbkdf2(passwordBytesLike, salt, c, dkLen, prfFunc);
 
-        var signingKey = getSigningKey(key, reject);
+        var signingKey = getSigningKey(Buffer.from(key, 'hex'), reject);
         if (!signingKey) {
           return;
         }
@@ -296,8 +303,8 @@ export function decrypt(
 }
 
 export function encrypt(
-  privateKey: Arrayish | SigningKey,
-  password: Arrayish | string,
+  privateKey: BytesLike | SigningKey,
+  password: BytesLike | string,
   options?: EncryptOptions,
   progressCallback?: ProgressCallback
 ): Promise<string> {
@@ -311,17 +318,17 @@ export function encrypt(
   }
 
   // Check the private key
-  let privateKeyBytes: Uint8Array;
+  let privateKeyBytesLike: Uint8Array;
   if (SigningKey.isSigningKey(privateKey)) {
-    privateKeyBytes = arrayify(privateKey.privateKey);
+    privateKeyBytesLike = arrayify(privateKey.privateKey);
   } else {
-    privateKeyBytes = arrayify(privateKey);
+    privateKeyBytesLike = arrayify(privateKey);
   }
-  if (privateKeyBytes.length !== 32) {
+  if (privateKeyBytesLike.length !== 32) {
     throw new Error('invalid private key');
   }
 
-  let passwordBytes = getPassword(password);
+  let passwordBytesLike = getPassword(password);
 
   let entropy: Uint8Array | null = null;
 
@@ -403,7 +410,7 @@ export function encrypt(
     // We take 64 bytes:
     //   - 32 bytes   As normal for the Web3 secret storage (derivedKey, macPrefix)
     //   - 32 bytes   AES key to encrypt mnemonic with (required here to be Ethers Wallet)
-    scrypt(passwordBytes, salt, N, r, p, 64, function (error: any, progress: any, key: any) {
+    scrypt(passwordBytesLike, salt, N, r, p, 64, function (error: any, progress: any, key: any) {
       if (error) {
         error.progress = progress;
         reject(error);
@@ -418,12 +425,12 @@ export function encrypt(
         var mnemonicKey = key.slice(32, 64);
 
         // Get the address for this private key
-        var address = new SigningKey(privateKeyBytes).address;
+        var address = computeAddress(privateKeyBytesLike);
 
         // Encrypt the private key
         var counter = new aes.Counter(iv);
         var aesCtr = new aes.ModeOfOperation.ctr(derivedKey, counter);
-        var ciphertext = arrayify(aesCtr.encrypt(privateKeyBytes));
+        var ciphertext = arrayify(aesCtr.encrypt(privateKeyBytesLike));
 
         // Compute the message authentication code, used to check the password
         var mac = keccak256(concat([macPrefix, ciphertext]));

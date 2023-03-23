@@ -160,6 +160,7 @@ describe('abi', () => {
   });
 
   it('event', () => {
+    console.log('e1.signature:', e1.signature);
     expect(e1.signature).equal(
       '0x47b78f0ec63d97830ace2babb45e6271b15a678528e901a9651e45b65105e6c2'
     );

@@ -1,4 +1,11 @@
-import { formatSignature as _formatSignature, AbiCoder } from 'ethers/utils/abi-coder';
+import {
+  AbiCoder,
+  FunctionFragment,
+  FormatTypes,
+  Result,
+  EventFragment,
+  Interface,
+} from '@ethersproject/abi';
 import { keccak256 } from './cry/keccak';
 
 class Coder extends AbiCoder {
@@ -25,7 +32,7 @@ class Coder extends AbiCoder {
     }
   }
 
-  public decode(types: string[], data: string): any[] {
+  public decode(types: string[], data: string): Result {
     try {
       return super.decode(types, data);
     } catch (err) {
@@ -38,17 +45,6 @@ class Coder extends AbiCoder {
 }
 
 const coder = new Coder();
-
-function formatSignature(fragment: any) {
-  try {
-    return _formatSignature(fragment);
-  } catch (err) {
-    if (err.reason) {
-      throw new Error(err.reason);
-    }
-    throw err;
-  }
-}
 
 /** encode/decode parameters of contract function call, event log, according to ABI JSON */
 export namespace abi {
@@ -69,7 +65,7 @@ export namespace abi {
    * @returns decoded value
    */
   export function decodeParameter(type: string, data: string) {
-    return coder.decode([type], data)[0];
+    return coder.decode([type], data)[0].toString();
   }
 
   /**
@@ -114,13 +110,20 @@ export namespace abi {
     /** the function signature, aka. 4 bytes prefix */
     public readonly signature: string;
 
+    public readonly fragment: FunctionFragment;
+
+    public readonly iface: Interface;
+
     /**
      * create a function object
      * @param definition abi definition of the function
      */
     constructor(public readonly definition: Function.Definition) {
-      this.canonicalName = formatSignature(definition);
-      this.signature = '0x' + keccak256(this.canonicalName).slice(0, 4).toString('hex');
+      // this.signature = '0x' + keccak256(this.canonicalName).slice(0, 4).toString('hex');
+      this.fragment = FunctionFragment.from(definition);
+      this.iface = new Interface([this.fragment]);
+      this.canonicalName = this.fragment.format(FormatTypes.full);
+      this.signature = this.iface.getSighash(this.fragment);
     }
 
     /**
@@ -167,10 +170,18 @@ export namespace abi {
     /** the event signature */
     public readonly signature: string;
 
+    public readonly fragment: EventFragment;
+
+    public readonly iface: Interface;
+
     /** for contract event */
     constructor(public readonly definition: Event.Definition) {
-      this.canonicalName = formatSignature(definition);
-      this.signature = '0x' + keccak256(this.canonicalName).toString('hex');
+      this.fragment = EventFragment.from(definition);
+      this.canonicalName = this.fragment.format(FormatTypes.full);
+
+      this.iface = new Interface([this.fragment]);
+      this.signature = this.iface.getEventTopic(definition.name);
+      console.log('sig: ', this.signature);
     }
 
     /**
@@ -228,18 +239,24 @@ export namespace abi {
         throw new Error('invalid topics count');
       }
 
+      let padded = data;
+      if (data.length % 2 == 1) {
+        padded += '0';
+      }
       const decodedNonIndexed = coder.decode(
         this.definition.inputs.filter((t) => !t.indexed).map((t) => t.type),
-        data
+        padded
       );
+      console.log('DECODENON INDEX:', decodedNonIndexed);
 
       const decoded: Decoded = {};
+      let nonIndexed = 0;
       this.definition.inputs.forEach((t, i) => {
         if (t.indexed) {
           const topic = topics.shift()!;
           decoded[i] = isDynamicType(t.type) ? topic : decodeParameter(t.type, topic);
         } else {
-          decoded[i] = decodedNonIndexed.shift();
+          decoded[i] = decodedNonIndexed[nonIndexed++];
         }
         if (t.name) {
           decoded[t.name] = decoded[i];
