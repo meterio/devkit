@@ -181,7 +181,6 @@ export namespace abi {
 
       this.iface = new Interface([this.fragment]);
       this.signature = this.iface.getEventTopic(definition.name);
-      console.log('sig: ', this.signature);
     }
 
     /**
