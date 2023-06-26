@@ -1,6 +1,7 @@
 import { RLP } from './rlp';
 import BigNumber from 'bignumber.js';
 const blake = require('blakejs');
+import { abi } from './abi';
 
 export namespace ScriptEngine {
   export const SCRIPT_ENGINE_PREFIX = 'ffffffff';
@@ -36,6 +37,104 @@ export namespace ScriptEngine {
     FlushAllStats = 103,
     Governing = 10001,
   }
+
+  export const NativeBucketOpenABI = {
+    anonymous: false,
+    inputs: [
+      { indexed: true, internalType: 'address', name: 'owner', type: 'address' },
+      { indexed: false, internalType: 'bytes32', name: 'bucketID', type: 'bytes32' },
+      { indexed: false, internalType: 'uint256', name: 'amount', type: 'uint256' },
+      { indexed: false, internalType: 'uint256', name: 'token', type: 'uint256' },
+    ],
+    name: 'NativeBucketOpen',
+    type: 'event',
+  };
+
+  export const NativeBucketCloseABI = {
+    anonymous: false,
+    inputs: [
+      { indexed: true, internalType: 'address', name: 'owner', type: 'address' },
+      { indexed: false, internalType: 'bytes32', name: 'bucketID', type: 'bytes32' },
+    ],
+    name: 'NativeBucketClose',
+    type: 'event',
+  };
+
+  export const NativeBucketDepositABI = {
+    anonymous: false,
+    inputs: [
+      { indexed: true, internalType: 'address', name: 'owner', type: 'address' },
+      { indexed: false, internalType: 'bytes32', name: 'bucketID', type: 'bytes32' },
+      { indexed: false, internalType: 'uint256', name: 'amount', type: 'uint256' },
+      { indexed: false, internalType: 'uint256', name: 'token', type: 'uint256' },
+    ],
+    name: 'NativeBucketDeposit',
+    type: 'event',
+  };
+
+  export const NativeBucketMergeABI = {
+    anonymous: false,
+    inputs: [
+      { indexed: true, internalType: 'address', name: 'owner', type: 'address' },
+      { indexed: false, internalType: 'bytes32', name: 'fromBktID', type: 'bytes32' },
+      { indexed: false, internalType: 'bytes32', name: 'toBktID', type: 'bytes32' },
+    ],
+    name: 'NativeBucketMerge',
+    type: 'event',
+  };
+
+  export const NativeBucketTransferFundABI = {
+    anonymous: false,
+    inputs: [
+      { indexed: true, internalType: 'address', name: 'owner', type: 'address' },
+      { indexed: false, internalType: 'bytes32', name: 'fromBktID', type: 'bytes32' },
+      { indexed: false, internalType: 'uint256', name: 'amount', type: 'uint256' },
+      { indexed: false, internalType: 'uint256', name: 'token', type: 'uint256' },
+      { indexed: false, internalType: 'bytes32', name: 'toBktID', type: 'bytes32' },
+    ],
+    name: 'NativeBucketTransferFund',
+    type: 'event',
+  };
+
+  export const NativeBucketUpdateCandidateABI = {
+    anonymous: false,
+    inputs: [
+      { indexed: true, internalType: 'address', name: 'owner', type: 'address' },
+      { indexed: false, internalType: 'bytes32', name: 'bucketID', type: 'bytes32' },
+      { indexed: false, internalType: 'address', name: 'fromCandidate', type: 'address' },
+      { indexed: false, internalType: 'address', name: 'toCandidate', type: 'address' },
+    ],
+    name: 'NativeBucketUpdateCandidate',
+    type: 'event',
+  };
+
+  export const NativeBucketWithdrawABI = {
+    anonymous: false,
+    inputs: [
+      { indexed: true, internalType: 'address', name: 'owner', type: 'address' },
+      { indexed: false, internalType: 'bytes32', name: 'fromBktID', type: 'bytes32' },
+      { indexed: false, internalType: 'uint256', name: 'amount', type: 'uint256' },
+      { indexed: false, internalType: 'uint256', name: 'token', type: 'uint256' },
+      { indexed: false, internalType: 'address', name: 'recipient', type: 'address' },
+      { indexed: false, internalType: 'bytes32', name: 'toBktID', type: 'bytes32' },
+    ],
+    name: 'NativeBucketWithdraw',
+    type: 'event',
+  };
+
+  export const NativeBucketOpen = new abi.Event(NativeBucketOpenABI as abi.Event.Definition);
+  export const NativeBucketClose = new abi.Event(NativeBucketCloseABI as abi.Event.Definition);
+  export const NativeBucketDeposit = new abi.Event(NativeBucketDepositABI as abi.Event.Definition);
+  export const NativeBucketWithdraw = new abi.Event(
+    NativeBucketWithdrawABI as abi.Event.Definition
+  );
+  export const NativeBucketMerge = new abi.Event(NativeBucketMergeABI as abi.Event.Definition);
+  export const NativeBucketTransferFund = new abi.Event(
+    NativeBucketTransferFundABI as abi.Event.Definition
+  );
+  export const NativeBucketUpdateCandidate = new abi.Event(
+    NativeBucketUpdateCandidateABI as abi.Event.Definition
+  );
 
   export const explainStakingOpCode = (opCode: StakingOpCode) => {
     switch (opCode) {

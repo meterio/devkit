@@ -246,7 +246,7 @@ export namespace abi {
         this.definition.inputs.filter((t) => !t.indexed).map((t) => t.type),
         padded
       );
-      console.log('DECODENON INDEX:', decodedNonIndexed);
+      // console.log('DECODENON INDEX:', decodedNonIndexed);
 
       const decoded: Decoded = {};
       let nonIndexed = 0;
