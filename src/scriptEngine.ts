@@ -122,6 +122,31 @@ export namespace ScriptEngine {
     type: 'event',
   };
 
+  export const NativeAuctionEndABI = {
+    anonymous: false,
+    inputs: [
+      { indexed: true, internalType: 'bytes32', name: 'id', type: 'bytes32' },
+      { indexed: false, internalType: 'uint256', name: 'receivedMTR', type: 'uint256' },
+      { indexed: false, internalType: 'uint256', name: 'releasedMTRG', type: 'uint256' },
+      { indexed: false, internalType: 'uint256', name: 'actualPrice', type: 'uint256' },
+    ],
+    name: 'NativeAuctionEnd',
+    type: 'event',
+  };
+
+  export const NativeAuctionStartABI = {
+    anonymous: false,
+    inputs: [
+      { indexed: true, internalType: 'bytes32', name: 'id', type: 'bytes32' },
+      { indexed: false, internalType: 'uint256', name: 'startHeight', type: 'uint256' },
+      { indexed: false, internalType: 'uint256', name: 'endHeight', type: 'uint256' },
+      { indexed: false, internalType: 'uint256', name: 'mtrgOnAuction', type: 'uint256' },
+      { indexed: false, internalType: 'uint256', name: 'reservedPrice', type: 'uint256' },
+    ],
+    name: 'NativeAuctionStart',
+    type: 'event',
+  };
+
   export const NativeBucketOpen = new abi.Event(NativeBucketOpenABI as abi.Event.Definition);
   export const NativeBucketClose = new abi.Event(NativeBucketCloseABI as abi.Event.Definition);
   export const NativeBucketDeposit = new abi.Event(NativeBucketDepositABI as abi.Event.Definition);
@@ -135,6 +160,9 @@ export namespace ScriptEngine {
   export const NativeBucketUpdateCandidate = new abi.Event(
     NativeBucketUpdateCandidateABI as abi.Event.Definition
   );
+
+  export const NativeAuctionEnd = new abi.Event(NativeAuctionEndABI as abi.Event.Definition);
+  export const NativeAuctionStart = new abi.Event(NativeAuctionStartABI as abi.Event.Definition);
 
   export const explainStakingOpCode = (opCode: StakingOpCode) => {
     switch (opCode) {
